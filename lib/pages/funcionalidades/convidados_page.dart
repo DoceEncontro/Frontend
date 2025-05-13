@@ -1,4 +1,5 @@
 import 'package:festora/models/evento_details_model.dart';
+import 'package:festora/models/usuario_response_model.dart';
 import 'package:festora/services/convidado_service.dart';
 import 'package:flutter/material.dart';
 import 'package:share_plus/share_plus.dart';
@@ -18,8 +19,14 @@ class ConvidadosPage extends StatefulWidget {
 class _ConvidadosPageState extends State<ConvidadosPage> {
   final TextEditingController _nomeController = TextEditingController();
   bool _isLoading = false;
-  List<String> _convidados = []; // apenas nomes por enquanto
+  List<Usuario> _convidados = []; // apenas nomes por enquanto
   bool _carregandoLista = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _carregarConvidados();
+  }
 
   final baseUrl = dotenv.env['BASE_URL']?.replaceAll('%23', '#');
 
@@ -60,12 +67,6 @@ class _ConvidadosPageState extends State<ConvidadosPage> {
       await _carregarConvidados();
       setState(() => _isLoading = false);
     }
-  }
-
-  @override
-  void initState() {
-    super.initState();
-    _carregarConvidados();
   }
 
   @override
@@ -143,7 +144,7 @@ class _ConvidadosPageState extends State<ConvidadosPage> {
                           itemBuilder: (context, index) {
                             return ListTile(
                               leading: const Icon(Icons.person),
-                              title: Text(_convidados[index]),
+                              title: Text(_convidados[index].nome),
                             );
                           },
                         ),
