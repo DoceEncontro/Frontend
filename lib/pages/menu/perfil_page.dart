@@ -1,6 +1,8 @@
+import 'package:festora/controllers/usuario_controller.dart';
 import 'package:festora/models/usuario_details_model.dart';
 import 'package:flutter/material.dart';
 import 'package:festora/services/usuario_service.dart';
+import 'package:provider/provider.dart';
 
 class PerfilPage extends StatefulWidget {
   static const String name = 'perfil';
@@ -12,7 +14,6 @@ class PerfilPage extends StatefulWidget {
 }
 
 class _PerfilPageState extends State<PerfilPage> {
-  UsuarioDetailsModel? _usuario;
   bool _carregando = true;
 
   @override
@@ -22,15 +23,15 @@ class _PerfilPageState extends State<PerfilPage> {
   }
 
   Future<void> _carregarUsuario() async {
-    final usuario = await UsuarioService().obterUsuario();
     setState(() {
-      _usuario = usuario;
       _carregando = false;
     });
   }
 
   @override
   Widget build(BuildContext context) {
+      final _usuario = Provider.of<UsuarioController>(context).usuario;
+
     return Scaffold(
       appBar: AppBar(
         title: const Text("Meu Perfil"),

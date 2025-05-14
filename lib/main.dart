@@ -1,4 +1,6 @@
 import 'package:festora/controllers/evento_controller.dart';
+import 'package:festora/controllers/usuario_controller.dart';
+import 'package:festora/models/usuario_response_model.dart';
 import 'package:festora/pages/navigation/router.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
@@ -12,6 +14,7 @@ void main() async {
     MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => EventoController()),
+        ChangeNotifierProvider(create: (_) => UsuarioController()),
       ],
       child: const MyApp(),
     ),

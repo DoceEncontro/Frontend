@@ -1,4 +1,5 @@
 import 'package:festora/controllers/evento_controller.dart';
+import 'package:festora/controllers/usuario_controller.dart';
 import 'package:festora/utils/redirecionar_util.dart';
 import 'package:festora/utils/rota_anterior_utils.dart';
 import 'package:flutter/material.dart';
@@ -27,15 +28,13 @@ class HomePage extends StatefulWidget {
 }
 
 class HomePageState extends State<HomePage> {
-  late u.UsuarioDetailsModel usuario;
-  late String usuarioNome = 'Carregando...';
   Timer? _tokenTimer;
 
   @override
   void initState() {
     super.initState();
     _carregarDados();
-    _tokenTimer = Timer.periodic(const Duration(seconds: 10), (timer) {
+    _tokenTimer = Timer.periodic(const Duration(seconds: 300), (timer) {
       TokenService.verificarToken(context);
     });
   }
@@ -47,16 +46,7 @@ class HomePageState extends State<HomePage> {
   }
 
   Future<void> _carregarDados() async {
-    await carregarUsuario();
     TokenService.verificarToken(context);
-  }
-
-  Future<void> carregarUsuario() async {
-    final buscarUsuario = await UsuarioService().obterUsuario();
-    setState(() {
-      usuario = buscarUsuario;
-      usuarioNome = buscarUsuario.nome;
-    });
   }
 
   Future<void> desativarEvento(String eventoId) async {
@@ -91,12 +81,13 @@ class HomePageState extends State<HomePage> {
   @override
 Widget build(BuildContext context) {
   final chas = Provider.of<EventoController>(context).eventos;
-
+  final usuario = Provider.of<UsuarioController>(context).usuario;
+  
   return GestureDetector(
     onTap: () => FocusScope.of(context).unfocus(),
     child: Scaffold(
       backgroundColor: const Color(0xFFF3F3F3),
-      appBar: GradientAppBar(usuarioNome),
+      appBar: GradientAppBar(usuario.nome),
       body: RefreshIndicator(
         onRefresh: _carregarDados,
         child: Padding(

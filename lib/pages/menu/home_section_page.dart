@@ -1,5 +1,7 @@
 import 'package:festora/controllers/evento_controller.dart';
+import 'package:festora/controllers/usuario_controller.dart';
 import 'package:festora/services/evento_service.dart';
+import 'package:festora/services/usuario_service.dart';
 import 'package:festora/widgets/dialogs/select_tipo_cha_dialog.dart';
 import 'package:flutter/material.dart';
 import 'package:festora/pages/menu/buscar_page.dart';
@@ -29,6 +31,7 @@ class _HomeSectionPageState extends State<HomeSectionPage> {
   final GlobalKey<HomePageState> _homeKey = GlobalKey<HomePageState>();
   final GlobalKey<ListagemPageState> _listagemKey =
       GlobalKey<ListagemPageState>();
+  bool _carregando = true;
 
   List<Widget> get _pages => [
         HomePage(
@@ -43,7 +46,7 @@ class _HomeSectionPageState extends State<HomeSectionPage> {
   void initState() {
     super.initState();
     _verificarLogin();
-    carregarEventosAtivos();
+    _carregarDados();
   }
 
   Future<void> _verificarLogin() async {
@@ -51,14 +54,20 @@ class _HomeSectionPageState extends State<HomeSectionPage> {
     await TokenService.verificarToken(context);
   }
 
-  Future<void> carregarEventosAtivos() async {
+  Future<void> _carregarDados() async {
+    setState(() => _carregando = true);
+
     if (!isCarregado) {
       final eventos = await EventoService().listarEventosAtivos();
+      final usuario = await UsuarioService().obterUsuario();
 
       Provider.of<EventoController>(context, listen: false).setEventos(eventos);
+      Provider.of<UsuarioController>(context, listen: false)
+          .setUsuario(usuario);
 
       isCarregado = true;
     }
+    setState(() => _carregando = false);
   }
 
   void _onItemTapped(int index) {
@@ -77,6 +86,12 @@ class _HomeSectionPageState extends State<HomeSectionPage> {
 
   @override
   Widget build(BuildContext context) {
+    if (_carregando) {
+      return const Scaffold(
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
+
     return Scaffold(
       body: PageView(
         controller: _pageController,
