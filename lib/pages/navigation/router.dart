@@ -22,6 +22,7 @@ abstract class AppRouter {
   static GoRouter router = GoRouter(
     initialLocation: '/login',
     routes: [
+      // Rotas principais
       GoRoute(
         path: '/login',
         name: LoginPage.name,
@@ -61,7 +62,7 @@ abstract class AppRouter {
         },
       ),
 
-      // 📄 DETALHES DO EVENTO
+      // 📄 DETALHES DO EVENTO (ShellRoute)
       GoRoute(
         path: '/detalhes-evento',
         name: DetalhesEventoPage.routeName, // 'detalhes-evento'
@@ -70,47 +71,66 @@ abstract class AppRouter {
 
           // Verifique se o eventoId está presente
           if (eventoId != null && eventoId.isNotEmpty) {
-            return DetalhesEventoPage(eventoId: eventoId);
+            return DetalhesEventoPage(eventoId: eventoId); // Passando eventoId
           } else {
-            // Caso não haja o eventoId, pode retornar uma tela de erro ou redirecionar
             return const Scaffold(
               body: Center(child: Text('Evento não encontrado.')),
             );
           }
         },
+        routes: [
+          // Rota de Convidados
+          GoRoute(
+            path: '/detalhes-evento/convidados',
+            name: ConvidadosPage.routeName,
+            builder: (context, state) {
+              final extra = state.extra;
+              if (extra is EventoDetails) {
+                return ConvidadosPage(evento: extra);
+              } else {
+                return const Scaffold(
+                  body: Center(child: Text('Evento não encontrado.')),
+                );
+              }
+            },
+          ),
+          // Rota de Participantes
+          GoRoute(
+            path: '/detalhes-evento/participantes',
+            name: ParticipantesPage.routeName,
+            builder: (context, state) {
+              final extra = state.extra;
+              if (extra is EventoDetails) {
+                return ParticipantesPage(evento: extra);
+              } else {
+                return const Scaffold(
+                  body: Center(child: Text('Evento não encontrado.')),
+                );
+              }
+            },
+          ),
+          // Rota de Presentes
+          GoRoute(
+            path: '/detalhes-evento/presente',
+            name: 'presente-evento',
+            builder: (context, state) {
+              final extra = state.extra;
+              if (extra is EventoDetails) {
+                return PresenteEventoPage(evento: extra);
+              } else {
+                return const Scaffold(
+                  body: Center(child: Text('Evento inválido.')),
+                );
+              }
+            },
+          ),
+        ],
       ),
+
       GoRoute(
         path: '/agenda',
         name: 'agenda',
         builder: (context, state) => const AgendaPage(),
-      ),
-      GoRoute(
-        path: '/convidados',
-        name: ConvidadosPage.routeName,
-        builder: (context, state) {
-          final extra = state.extra;
-          if (extra is EventoDetails) {
-            return ConvidadosPage(evento: extra);
-          } else {
-            return const Scaffold(
-              body: Center(child: Text('Evento não encontrado.')),
-            );
-          }
-        },
-      ),
-      GoRoute(
-        path: '/participantes',
-        name: ParticipantesPage.routeName,
-        builder: (context, state) {
-          final extra = state.extra;
-          if (extra is EventoDetails) {
-            return ParticipantesPage(evento: extra);
-          } else {
-            return const Scaffold(
-              body: Center(child: Text('Evento não encontrado.')),
-            );
-          }
-        },
       ),
       GoRoute(
         path: '/adicionar-amigo',
@@ -144,20 +164,6 @@ abstract class AppRouter {
         path: '/convite',
         name: ConviteLinkPage.routeName,
         builder: (context, state) => const ConviteLinkPage(),
-      ),
-      GoRoute(
-        path: '/presente-evento',
-        name: 'presente-evento',
-        builder: (context, state) {
-          final extra = state.extra;
-          if (extra is EventoDetails) {
-            return PresenteEventoPage(evento: extra);
-          } else {
-            return const Scaffold(
-              body: Center(child: Text('Evento inválido.')),
-            );
-          }
-        },
       ),
     ],
   );
