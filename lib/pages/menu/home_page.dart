@@ -45,11 +45,6 @@ class HomePageState extends State<HomePage> {
     super.dispose();
   }
 
-  void _compartilharMensagem() {
-    final texto = "Olá, tudo bem?";
-    Share.share(texto);
-  }
-
   Future<void> _carregarDados() async {
     await carregarEventosAtivos();
     await carregarUsuario();
@@ -81,11 +76,6 @@ class HomePageState extends State<HomePage> {
   //   }
   // }
 
-  void _enviarMensagemWhatsApp() {
-    const mensagem = "Olá, tudo bem?";
-    Share.share(mensagem);
-  }
-
   void redirecionarEvento(String eventoId) {
     final uri = Uri.parse('/detalhes-evento?eventoId=$eventoId');
     GoRouter.of(context).go(uri.toString());
@@ -95,7 +85,6 @@ class HomePageState extends State<HomePage> {
     {"icon": Icons.add, "label": "Criar Evento"},
     {"icon": Icons.calendar_today, "label": "Agenda"},
     {"icon": Icons.group, "label": "Amigos"},
-    {"icon": Icons.message, "label": "Enviar WhatsApp"},
   ];
 
   @override
@@ -228,8 +217,6 @@ class HomePageState extends State<HomePage> {
                             GoRouter.of(context).pushNamed('agenda');
                           } else if (item['label'] == 'Amigos') {
                             GoRouter.of(context).pushNamed('amigos');
-                          } else if (item['label'] == 'Enviar WhatsApp') {
-                            _enviarMensagemWhatsApp();
                           }
                         },
                         child: Container(
