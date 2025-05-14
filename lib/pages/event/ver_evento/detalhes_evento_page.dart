@@ -108,23 +108,46 @@ class _DetalhesEventoPageState extends State<DetalhesEventoPage> {
                             ],
                           ),
                         ),
-                        Column(
+                        Row(
+                          mainAxisSize: MainAxisSize.min,
                           children: [
-                            IconButton(
-                              icon: const Icon(Icons.person_add_alt_1,
-                                  color: Colors.purple),
-                              tooltip: 'Convidar participantes',
-                              onPressed: () {
-                                context.pushNamed(
-                                  'convidados',
-                                  extra: evento,
-                                );
-                              },
+                            Column(
+                              children: [
+                                IconButton(
+                                  icon: const Icon(Icons.people,
+                                      color: Color.fromARGB(255, 192, 56, 138)),
+                                  tooltip: 'Participantes',
+                                  onPressed: () {
+                                    // Para ser Implementado
+                                  },
+                                ),
+                                const Text(
+                                  '0 participantes',
+                                  style: TextStyle(
+                                      fontSize: 12, color: Colors.black54),
+                                ),
+                              ],
                             ),
-                            const Text(
-                              '0 convidados',
-                              style: TextStyle(
-                                  fontSize: 12, color: Colors.black54),
+                            const SizedBox(width: 16), // espaço entre os ícones
+                            Column(
+                              children: [
+                                IconButton(
+                                  icon: const Icon(Icons.person_add_alt_1,
+                                      color: Colors.purple),
+                                  tooltip: 'Convidar',
+                                  onPressed: () {
+                                    context.pushNamed(
+                                      'convidados',
+                                      extra: evento,
+                                    );
+                                  },
+                                ),
+                                const Text(
+                                  '0 convidados',
+                                  style: TextStyle(
+                                      fontSize: 12, color: Colors.black54),
+                                ),
+                              ],
                             ),
                           ],
                         ),
@@ -249,15 +272,22 @@ class _DetalhesEventoPageState extends State<DetalhesEventoPage> {
                   GoRouter.of(context)
                       .pushNamed('presente-evento', extra: evento);
                 }),
+                _buildIconTile(Icons.people, 'Participantes',
+                    iconColor: const Color.fromARGB(255, 192, 56, 138),
+                    onTap: () {
+                  // TODO: implementar
+                }),
+                _buildIconTile(Icons.group_add, 'Convidados',
+                    iconColor: Colors.purple, onTap: () {
+                  context.pushNamed(
+                    'convidados',
+                    extra: evento,
+                  );
+                }),
                 _buildIconTile(Icons.map, 'Localização',
                     iconColor: const Color.fromARGB(255, 56, 192, 61),
                     onTap: () {
                   // TODO: implementar
-                }),
-                _buildIconTile(Icons.group_add, 'Convidar Amigos',
-                    iconColor: Colors.purple, onTap: () {
-                  GoRouter.of(context)
-                      .pushNamed('convidar-amigos', extra: evento);
                 }),
               ],
             ),
