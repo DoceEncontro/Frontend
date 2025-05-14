@@ -2,6 +2,7 @@ import 'package:festora/models/evento_details_model.dart';
 import 'package:festora/models/usuario_response_model.dart';
 import 'package:festora/services/amizade_service.dart';
 import 'package:festora/services/convidado_service.dart';
+import 'package:festora/services/convite_service.dart';
 import 'package:festora/services/evento_service.dart';
 import 'package:flutter/material.dart';
 import 'package:share_plus/share_plus.dart';
@@ -27,6 +28,7 @@ class _ConvidadosPageState extends State<ConvidadosPage> {
   bool _carregandoLista = true;
   bool _carregandoAmigos = false;
   bool _nenhumAmigo = false;
+  List<String> _amigosSelecionados = [];
 
   final baseUrl = dotenv.env['BASE_URL']?.replaceAll('%23', '#');
 
@@ -37,56 +39,56 @@ class _ConvidadosPageState extends State<ConvidadosPage> {
   }
 
   Future<void> carregarAmigosEParticipantes() async {
-  if (_nenhumAmigo) return; // já sabemos que não tem amigos
+    if (_nenhumAmigo) return; // já sabemos que não tem amigos
 
-  setState(() {
-    _carregandoAmigos = true;
-    _carregandoLista = true; // Inicia o carregamento dos participantes também
-  });
+    setState(() {
+      _carregandoAmigos = true;
+      _carregandoLista = true; // Inicia o carregamento dos participantes também
+    });
 
-  try {
-    // Carregar a lista de participantes
-    final listaParticipantes = await EventoService().listarParticipantes(widget.evento.id);
+    try {
+      // Carregar a lista de participantes
+      final listaParticipantes =
+          await EventoService().listarParticipantes(widget.evento.id);
 
-    // Carregar a lista de amigos aceitos
-    final listaAmigos = await AmizadeService().listarAceitos();
+      // Carregar a lista de amigos aceitos
+      final listaAmigos = await AmizadeService().listarAceitos();
 
-    // Caso não haja amigos, defina a flag
-    if (listaAmigos.isEmpty) {
-      _nenhumAmigo = true;
-      _amigos = [];
-    } else {
-      // Filtra amigos que não estão na lista de convidados e não são participantes
-      final amigosFiltrados = listaAmigos.where((amigo) {
-        // Verifica se o amigo não está na lista de convidados e nem na lista de participantes
-        return !_convidados.any((convidado) => convidado.id == amigo.id) && 
-               !listaParticipantes.any((participante) => participante.id == amigo.id);
-      }).toList();
+      // Caso não haja amigos, defina a flag
+      if (listaAmigos.isEmpty) {
+        _nenhumAmigo = true;
+        _amigos = [];
+      } else {
+        // Filtra amigos que não estão na lista de convidados e não são participantes
+        final amigosFiltrados = listaAmigos.where((amigo) {
+          // Verifica se o amigo não está na lista de convidados e nem na lista de participantes
+          return !_convidados.any((convidado) => convidado.id == amigo.id) &&
+              !listaParticipantes
+                  .any((participante) => participante.id == amigo.id);
+        }).toList();
 
+        setState(() {
+          _amigos = amigosFiltrados;
+          if (_amigos.isEmpty) _nenhumAmigo = true; // todos já convidados
+        });
+      }
+
+      // Adicionar participantes à lista _participantes
       setState(() {
-        _amigos = amigosFiltrados;
-        if (_amigos.isEmpty) _nenhumAmigo = true; // todos já convidados
+        _participantes = listaParticipantes;
+      });
+    } catch (_) {
+      setState(() {
+        _amigos = [];
+        _participantes = [];
+      });
+    } finally {
+      setState(() {
+        _carregandoAmigos = false;
+        _carregandoLista = false; // Finaliza o carregamento dos participantes
       });
     }
-
-    // Adicionar participantes à lista _participantes
-    setState(() {
-      _participantes = listaParticipantes;
-    });
-
-  } catch (_) {
-    setState(() {
-      _amigos = [];
-      _participantes = [];
-    });
-  } finally {
-    setState(() {
-      _carregandoAmigos = false;
-      _carregandoLista = false; // Finaliza o carregamento dos participantes
-    });
   }
-}
-
 
   Future<void> _carregarConvidados() async {
     setState(() => _carregandoLista = true);
@@ -103,29 +105,37 @@ class _ConvidadosPageState extends State<ConvidadosPage> {
     }
   }
 
-  Future<void> _adicionarConvidado() async {
-    final nome = _nomeController.text.trim();
-    if (nome.isEmpty) return;
+  Future<void> _adicionarConvidados() async {
+  if (_amigosSelecionados.isEmpty) return;
 
-    setState(() => _isLoading = true);
+  setState(() => _isLoading = true);
 
-    try {
-      // Aqui você irá chamar o serviço que adiciona no banco (substituir por seu método real)
-      await ConvidadoService().adicionarConvidado(nome, widget.evento.id!);
+  try {
+    await ConviteService().enviarConvites(widget.evento.id, _amigosSelecionados);
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Convidado adicionado com sucesso!')),
-      );
-      _nomeController.clear();
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Erro ao adicionar convidado')),
-      );
-    } finally {
-      await _carregarConvidados();
-      setState(() => _isLoading = false);
-    }
+    // Atualiza localmente as listas
+    final convidadosNovos = _amigos
+        .where((amigo) => _amigosSelecionados.contains(amigo.id))
+        .toList();
+
+    setState(() {
+      _amigos.removeWhere((amigo) => _amigosSelecionados.contains(amigo.id));
+      _convidados.addAll(convidadosNovos);
+      _amigosSelecionados.clear();
+    });
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Amigos convidados com sucesso!')),
+    );
+  } catch (_) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Erro ao convidar amigos')),
+    );
+  } finally {
+    setState(() => _isLoading = false);
   }
+}
+
 
   Future<void> _abrirModalConvidarAmigos() async {
     if (_amigos.isEmpty && !_nenhumAmigo) {
@@ -135,57 +145,55 @@ class _ConvidadosPageState extends State<ConvidadosPage> {
     showDialog(
       context: context,
       builder: (context) {
-        return AlertDialog(
-          title: const Text('Convidar Amigos'),
-          content: _carregandoAmigos
-              ? const Center(child: CircularProgressIndicator())
-              : (_nenhumAmigo || _amigos.isEmpty)
-                  ? const Text(
-                      'Você não possui amigos disponíveis para convite.')
-                  : SizedBox(
-                      width: double.maxFinite,
-                      child: ListView.builder(
-                        shrinkWrap: true,
-                        itemCount: _amigos.length,
-                        itemBuilder: (context, index) {
-                          final amigo = _amigos[index];
-                          return ListTile(
-                            leading: const Icon(Icons.person_add),
-                            title: Text(amigo.nome),
-                            onTap: () async {
-                              Navigator.of(context).pop();
-                              setState(() => _isLoading = true);
-                              try {
-                                await ConvidadoService().adicionarConvidado(
-                                    amigo.nome, widget.evento.id!);
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(
-                                    content:
-                                        Text('${amigo.nome} foi convidado!'),
-                                  ),
-                                );
-                                await _carregarConvidados();
-                                await carregarAmigosEParticipantes();
-                              } catch (_) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                      content:
-                                          Text('Erro ao convidar o amigo.')),
-                                );
-                              } finally {
-                                setState(() => _isLoading = false);
-                              }
+        return StatefulBuilder(
+          builder: (context, setStateModal) {
+            return AlertDialog(
+              title: const Text('Convidar Amigos'),
+              content: _carregandoAmigos
+                  ? const Center(child: CircularProgressIndicator())
+                  : (_nenhumAmigo || _amigos.isEmpty)
+                      ? const Text(
+                          'Você não possui amigos disponíveis para convite.')
+                      : SizedBox(
+                          width: double.maxFinite,
+                          child: ListView.builder(
+                            shrinkWrap: true,
+                            itemCount: _amigos.length,
+                            itemBuilder: (context, index) {
+                              final amigo = _amigos[index];
+                              return CheckboxListTile(
+                                value: _amigosSelecionados.contains(amigo.id),
+                                title: Text(amigo.nome),
+                                onChanged: (bool? selected) {
+                                  setStateModal(() {
+                                    if (selected == true) {
+                                      _amigosSelecionados.add(amigo.id);
+                                    } else {
+                                      _amigosSelecionados.remove(amigo.id);
+                                    }
+                                  });
+                                },
+                              );
                             },
-                          );
+                          ),
+                        ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  child: const Text('Cancelar'),
+                ),
+                ElevatedButton(
+                  onPressed: _amigosSelecionados.isEmpty
+                      ? null
+                      : () async {
+                          Navigator.of(context).pop();
+                          await _adicionarConvidados();
                         },
-                      ),
-                    ),
-          actions: [
-            TextButton(
-              child: const Text('Fechar'),
-              onPressed: () => Navigator.of(context).pop(),
-            ),
-          ],
+                  child: const Text('Convidar selecionados'),
+                ),
+              ],
+            );
+          },
         );
       },
     );
