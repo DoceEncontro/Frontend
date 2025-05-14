@@ -1,7 +1,8 @@
 import 'dart:convert';
 import 'package:festora/models/criar_evento_erro_model.dart';
 import 'package:festora/models/evento_details_model.dart';
-import 'package:flutter/foundation.dart'; 
+import 'package:festora/models/usuario_response_model.dart';
+import 'package:flutter/foundation.dart';
 import 'package:festora/models/evento_model.dart';
 import 'package:http/http.dart' as http;
 import 'package:festora/utils/TokenHelper.dart';
@@ -11,7 +12,6 @@ class EventoService {
   static final String baseUrl = '${ApiConfig.baseUrl}/eventos';
 
   Future<(bool, EventoErroModel)> criarEvento(EventoModel evento) async {
-    
     final token = await TokenHelper.getToken();
     try {
       final response = await http.post(
@@ -40,7 +40,6 @@ class EventoService {
   }
 
   Future<(bool, String)> participar(String eventoId) async {
-    
     final token = await TokenHelper.getToken();
     try {
       final response = await http.post(
@@ -62,8 +61,7 @@ class EventoService {
     }
   }
 
-
-    Future<(bool, EventoDetails)> buscarEvento(String eventoId) async {
+  Future<(bool, EventoDetails)> buscarEvento(String eventoId) async {
     final token = await TokenHelper.getToken();
     try {
       final response = await http.get(
@@ -72,15 +70,30 @@ class EventoService {
           'Authorization': 'Bearer $token',
         },
       );
-        final dynamic data = jsonDecode(utf8.decode(response.bodyBytes));
-        return (true, EventoDetails.fromJson(data));
-
+      final dynamic data = jsonDecode(utf8.decode(response.bodyBytes));
+      return (true, EventoDetails.fromJson(data));
     } catch (e) {
       print(e);
       throw Error();
     }
   }
 
+  Future<List<Usuario>> listarParticipantes(String eventoId) async {
+    final token = await TokenHelper.getToken();
+    final response = await http.get(
+      Uri.parse('$baseUrl/participantes/$eventoId'),
+      headers: {
+        'Authorization': 'Bearer $token',
+      },
+    );
+
+    if (response.statusCode == 200) {
+      final List<dynamic> dados = jsonDecode(response.body);
+      return dados.map((item) => Usuario.fromJson(item)).toList();
+    } else {
+      throw Exception('Erro ao buscar convidados');
+    }
+  }
 
   Future<List<EventoModel>> listarEventosAtivos() async {
     final token = await TokenHelper.getToken();

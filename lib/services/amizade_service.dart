@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:festora/models/usuario_response_model.dart';
 import 'package:http/http.dart' as http;
 import 'package:festora/services/token_service.dart';
 import 'package:festora/config/api_config.dart';
@@ -53,33 +54,23 @@ class AmizadeService {
     }
   }
 
-  Future<List<Map<String, dynamic>>> listarAceitos() async {
-    try {
-      final url = Uri.parse(baseUrl);
-      final token = await TokenService.obterToken();
+  Future<List<Usuario>> listarAceitos() async {
+    final url = Uri.parse(baseUrl);
+    final token = await TokenService.obterToken();
 
-      print('Chamando: $url');
-      print('Token: $token');
+    final response = await http.get(
+      url,
+      headers: {
+        'Authorization': 'Bearer $token',
+        'Content-Type': 'application/json',
+      },
+    );
 
-      final response = await http.get(
-        url,
-        headers: {
-          'Authorization': 'Bearer $token',
-          'Content-Type': 'application/json',
-        },
-      ).timeout(const Duration(seconds: 10));
-
-      print('Status: ${response.statusCode}');
-      print('Body: ${response.body}');
-
-      if (response.statusCode == 200) {
-        return List<Map<String, dynamic>>.from(json.decode(response.body));
-      } else {
-        throw Exception('Erro ao buscar amizades');
-      }
-    } catch (e) {
-      print('Erro em listarAceitos: $e');
-      rethrow;
+    if (response.statusCode == 200) {
+      final List<dynamic> dados = jsonDecode(response.body);
+      return dados.map((item) => Usuario.fromJson(item['amigo'])).toList();
+    } else {
+      throw Exception('Erro ao buscar convidados');
     }
   }
 }

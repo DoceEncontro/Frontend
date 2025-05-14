@@ -20,27 +20,27 @@ class _AmigosPageState extends State<AmigosPage> {
   @override
   void initState() {
     super.initState();
-    carregarAmizades();
+    // carregarAmizades();
   }
 
-  Future<void> carregarAmizades() async {
-    print('Iniciando carregarAmizades...');
-    try {
-      final aceitos = await AmizadeService().listarAceitos();
-      print('Resposta recebida: $aceitos');
-      setState(() {
-        amigos = aceitos;
-      });
-    } catch (e) {
-      print('Erro ao carregar amizades: $e');
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Erro ao carregar amigos.')),
-      );
-    } finally {
-      print('Finalizando carregamento...');
-      setState(() => carregando = false);
-    }
-  }
+  // Future<void> carregarAmizades() async {
+  //   print('Iniciando carregarAmizades...');
+  //   try {
+  //     final aceitos = await AmizadeService().listarAceitos();
+  //     print('Resposta recebida: $aceitos');
+  //     setState(() {
+  //       amigos = aceitos;
+  //     });
+  //   } catch (e) {
+  //     print('Erro ao carregar amizades: $e');
+  //     ScaffoldMessenger.of(context).showSnackBar(
+  //       const SnackBar(content: Text('Erro ao carregar amigos.')),
+  //     );
+  //   } finally {
+  //     print('Finalizando carregamento...');
+  //     setState(() => carregando = false);
+  //   }
+  // }
 
   Future<void> _enviarSolicitacao() async {
     final email = _emailController.text.trim();

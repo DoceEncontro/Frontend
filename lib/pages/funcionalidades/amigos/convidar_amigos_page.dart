@@ -25,15 +25,15 @@ class _ConvidarAmigosPageState extends State<ConvidarAmigosPage> {
   }
 
   Future<void> carregarAmigos() async {
-    try {
-      final lista = await AmizadeService().listarAceitos();
-      setState(() {
-        amigos = lista;
-        carregando = false;
-      });
-    } catch (_) {
-      setState(() => carregando = false);
-    }
+    // try {
+    //   final lista = await AmizadeService().listarAceitos();
+    //   setState(() {
+    //     amigos = lista;
+    //     carregando = false;
+    //   });
+    // } catch (_) {
+    //   setState(() => carregando = false);
+    // }
   }
 
   Future<void> enviarConvites() async {
