@@ -1,3 +1,4 @@
+import 'package:festora/controllers/presente_controller.dart';
 import 'package:festora/models/criar_presente_model.dart';
 import 'package:festora/models/evento_details_model.dart';
 import 'package:festora/models/presente_model.dart';
@@ -7,6 +8,7 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:festora/services/token_service.dart';
+import 'package:provider/provider.dart';
 
 class PresenteEventoPage extends StatefulWidget {
   final EventoDetails evento;
@@ -27,13 +29,20 @@ class _PresenteEventoPageState extends State<PresenteEventoPage> {
   bool _carregando = false;
   late EventoDetails _evento;
 
-  late List<PresenteModel> presentes = [];
+  late PresenteController presenteController;
 
   @override
   void initState() {
     super.initState();
     _evento = widget.evento;
+    presenteController =
+        Provider.of<PresenteController>(context, listen: false);
     carregarPresentes();
+  }
+
+  @override
+  void dispose() {
+    super.dispose();
   }
 
   Future<void> _excluirPresente(String presenteId) async {
@@ -46,7 +55,7 @@ class _PresenteEventoPageState extends State<PresenteEventoPage> {
 
       if (sucesso) {
         setState(() {
-          presentes.removeWhere((p) => p.id == presenteId);
+          presenteController.excluirPresentePorId(presenteId);
         });
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Presente excluído com sucesso!')),
@@ -77,12 +86,8 @@ class _PresenteEventoPageState extends State<PresenteEventoPage> {
           await PresenteService().removerResponsavel(presenteId);
 
       if (response.$1) {
-        setState(() {
-          final index = presentes.indexWhere((p) => p.id == response.$2.id);
-          if (index != -1) {
-            presentes[index] = response.$2;
-          }
-        });
+        presenteController.editarPresentePorId(response.$2);
+          
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Entrega cancelada com sucesso!')),
         );
@@ -112,12 +117,7 @@ class _PresenteEventoPageState extends State<PresenteEventoPage> {
           await PresenteService().adicionarResponsavel(presenteId);
 
       if (sucesso.$1) {
-        setState(() {
-          final index = presentes.indexWhere((p) => p.id == sucesso.$2.id);
-          if (index != -1) {
-            presentes[index] = sucesso.$2;
-          }
-        });
+        presenteController.editarPresentePorId(sucesso.$2);
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Responsável adicionado com sucesso!')),
         );
@@ -147,9 +147,7 @@ class _PresenteEventoPageState extends State<PresenteEventoPage> {
       (bool, PresenteModel) response =
           await PresenteService().criarPresente(eventoId, presente);
       if (response.$1) {
-        setState(() {
-          presentes.add(response.$2);
-        });
+        presenteController.adicionarPresente(response.$2);
         // Exibe uma mensagem de sucesso
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Presente cadastrado com sucesso!')),
@@ -175,20 +173,19 @@ class _PresenteEventoPageState extends State<PresenteEventoPage> {
       _carregando = true;
     });
 
-    try {
-      final presentes = await PresenteService().buscarPresentes(_evento.id);
-      setState(() {
-        this.presentes = presentes;
-      });
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Erro: ${e.toString()}')),
-      );
-    } finally {
-      setState(() {
-        _carregando = false;
-      });
+    if (!presenteController.isCarregado) {
+      try {
+        final presentes = await PresenteService().buscarPresentes(_evento.id);
+        presenteController.setPresentes(presentes);
+      } catch (e) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Erro: ${e.toString()}')),
+        );
+      }
     }
+    setState(() {
+      _carregando = false;
+    });
   }
 
   void _abrirModalCadastro() {
@@ -275,13 +272,7 @@ class _PresenteEventoPageState extends State<PresenteEventoPage> {
                       );
 
                       if (response.$1) {
-                        setState(() {
-                          final index = presentes
-                              .indexWhere((p) => p.id == response.$2.id);
-                          if (index != -1) {
-                            presentes[index] = response.$2;
-                          }
-                        });
+                        presenteController.editarPresentePorId(response.$2);
                         Navigator.of(context).pop();
                         ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(
@@ -309,6 +300,8 @@ class _PresenteEventoPageState extends State<PresenteEventoPage> {
 
   @override
   Widget build(BuildContext context) {
+    final presentes = presenteController.presentes;
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Presentes'),
