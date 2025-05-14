@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:festora/models/evento_details_model.dart';
 import 'package:festora/models/evento_model.dart';
+import 'package:festora/pages/funcionalidades/participantes_page.dart';
 import 'package:festora/utils/rota_anterior_utils.dart';
 import 'package:flutter/material.dart';
 import 'package:festora/services/evento_service.dart';
@@ -118,7 +119,10 @@ class _DetalhesEventoPageState extends State<DetalhesEventoPage> {
                                       color: Color.fromARGB(255, 192, 56, 138)),
                                   tooltip: 'Participantes',
                                   onPressed: () {
-                                    // Para ser Implementado
+                                    context.pushNamed(
+                                      ParticipantesPage.routeName,
+                                      extra: evento,
+                                    );
                                   },
                                 ),
                                 const Text(
@@ -275,7 +279,10 @@ class _DetalhesEventoPageState extends State<DetalhesEventoPage> {
                 _buildIconTile(Icons.people, 'Participantes',
                     iconColor: const Color.fromARGB(255, 192, 56, 138),
                     onTap: () {
-                  // TODO: implementar
+                  context.pushNamed(
+                    ParticipantesPage.routeName,
+                    extra: evento,
+                  );
                 }),
                 _buildIconTile(Icons.group_add, 'Convidados',
                     iconColor: Colors.purple, onTap: () {

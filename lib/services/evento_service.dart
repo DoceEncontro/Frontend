@@ -88,8 +88,8 @@ class EventoService {
     );
 
     if (response.statusCode == 200) {
-      final List<dynamic> dados = jsonDecode(response.body);
-      return dados.map((item) => Usuario.fromJson(item)).toList();
+      final List<dynamic> dados = jsonDecode(utf8.decode(response.bodyBytes));
+    return dados.map((item) => Usuario.fromJson(item)).toList();
     } else {
       throw Exception('Erro ao buscar convidados');
     }
@@ -184,6 +184,50 @@ class EventoService {
     } catch (e) {
       print('Erro na comunicação: $e');
       return false;
+    }
+  }
+
+  Future<(bool, String)> retirarParticipante(String eventoId, String usuarioId) async {
+    final token = await TokenHelper.getToken();
+    try {
+      final response = await http.delete(
+        Uri.parse('$baseUrl/retirarParticipante/$eventoId/$usuarioId'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+      );
+      if (response.statusCode == 200) {
+        return (true, "Participante retirado com sucesso!");
+      } else if (response.statusCode == 409) {
+        return (false, "O usuário está participando do evento");
+      } else {
+        return (false, "Erro ao retirar participante");
+      }
+    } catch (e) {
+      return (false, "Erro ao retirar participante");
+    }
+  }
+
+  Future<(bool, String)> sairEvento(String eventoId) async {
+    final token = await TokenHelper.getToken();
+    try {
+      final response = await http.delete(
+        Uri.parse('$baseUrl/participar/$eventoId'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+      );
+      if (response.statusCode == 200) {
+        return (true, "Participação retirada com sucesso!");
+      } else if (response.statusCode == 409) {
+        return (false, "Você não está participando do evento");
+      } else {
+        return (false, "Erro ao retirar participação");
+      }
+    } catch (e) {
+      return (false, "Erro ao retirar participação");
     }
   }
 }

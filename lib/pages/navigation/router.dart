@@ -8,6 +8,7 @@ import 'package:festora/pages/funcionalidades/amigos/convidar_amigos_page.dart';
 import 'package:festora/pages/funcionalidades/amigos/convites/convite_page.dart';
 import 'package:festora/pages/funcionalidades/calendario_page.dart';
 import 'package:festora/pages/funcionalidades/convidados_page.dart';
+import 'package:festora/pages/funcionalidades/participantes_page.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../help/help_page.dart';
@@ -90,6 +91,20 @@ abstract class AppRouter {
           final extra = state.extra;
           if (extra is EventoDetails) {
             return ConvidadosPage(evento: extra);
+          } else {
+            return const Scaffold(
+              body: Center(child: Text('Evento não encontrado.')),
+            );
+          }
+        },
+      ),
+      GoRoute(
+        path: '/participantes',
+        name: ParticipantesPage.routeName,
+        builder: (context, state) {
+          final extra = state.extra;
+          if (extra is EventoDetails) {
+            return ParticipantesPage(evento: extra);
           } else {
             return const Scaffold(
               body: Center(child: Text('Evento não encontrado.')),
