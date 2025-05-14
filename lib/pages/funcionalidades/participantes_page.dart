@@ -1,3 +1,4 @@
+import 'package:festora/controllers/usuario_controller.dart';
 import 'package:festora/models/evento_details_model.dart';
 import 'package:festora/models/usuario_details_model.dart';
 import 'package:festora/models/usuario_response_model.dart';
@@ -7,6 +8,7 @@ import 'package:festora/services/evento_service.dart';
 import 'package:festora/services/usuario_service.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:provider/provider.dart';
 
 class ParticipantesPage extends StatefulWidget {
   final EventoDetails evento;
@@ -21,7 +23,6 @@ class ParticipantesPage extends StatefulWidget {
 
 class _ParticipantesPageState extends State<ParticipantesPage> {
   final TextEditingController _pesquisaController = TextEditingController();
-  late UsuarioDetailsModel usuario;
   bool _carregando = true;
   List<Usuario> _participantes = [];
   List<Usuario> _participantesFiltrados = [];
@@ -31,7 +32,6 @@ class _ParticipantesPageState extends State<ParticipantesPage> {
     super.initState();
     _pesquisaController.addListener(_filtrarParticipantes);
     _carregarParticipantes();
-    _carregarUsuario();
   }
 
   Future<void> _carregarParticipantes() async {
@@ -59,13 +59,6 @@ class _ParticipantesPageState extends State<ParticipantesPage> {
     } finally {
       setState(() => _carregando = false);
     }
-  }
-
-  Future<void> _carregarUsuario() async {
-    final buscarUsuario = await UsuarioService().obterUsuario();
-    setState(() {
-      usuario = buscarUsuario;
-    });
   }
 
   void _filtrarParticipantes() {
@@ -101,33 +94,32 @@ class _ParticipantesPageState extends State<ParticipantesPage> {
   }
 
   Future<void> confirmarRemocaoParticipante(
-    BuildContext context, String usuarioId) async {
-  final confirmacao = await showDialog<bool>(
-    context: context,
-    builder: (context) => AlertDialog(
-      title: const Text("Remover Participante"),
-      content:
-          const Text("Tem certeza que deseja remover este participante do evento?"),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.of(context).pop(false),
-          child: const Text("Cancelar"),
-        ),
-        TextButton(
-          onPressed: () => Navigator.of(context).pop(true),
-          child: const Text("Remover", style: TextStyle(color: Colors.red)),
-        ),
-      ],
-    ),
-  );
+      BuildContext context, String usuarioId) async {
+    final confirmacao = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text("Remover Participante"),
+        content: const Text(
+            "Tem certeza que deseja remover este participante do evento?"),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text("Cancelar"),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: const Text("Remover", style: TextStyle(color: Colors.red)),
+          ),
+        ],
+      ),
+    );
 
-  if (confirmacao == true) {
-    await removerParticipante(usuarioId);
+    if (confirmacao == true) {
+      await removerParticipante(usuarioId);
+    }
   }
-}
 
-  Future<void> confirmarSaidaEvento(
-      BuildContext context) async {
+  Future<void> confirmarSaidaEvento(BuildContext context) async {
     final confirmacao = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
@@ -170,6 +162,8 @@ class _ParticipantesPageState extends State<ParticipantesPage> {
 
   @override
   Widget build(BuildContext context) {
+    final usuario = Provider.of<UsuarioController>(context).usuario;
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Participantes'),
@@ -239,7 +233,8 @@ class _ParticipantesPageState extends State<ParticipantesPage> {
                                           widget.evento.organizador.id)
                                     TextButton.icon(
                                       onPressed: () =>
-                                          confirmarRemocaoParticipante(context, participante.id),
+                                          confirmarRemocaoParticipante(
+                                              context, participante.id),
                                       icon: const Icon(Icons.remove_circle,
                                           color: Colors.red),
                                       label: const Text("Remover",
@@ -249,8 +244,8 @@ class _ParticipantesPageState extends State<ParticipantesPage> {
                                       participante.id !=
                                           widget.evento.organizador.id)
                                     TextButton.icon(
-                                      onPressed: () => confirmarSaidaEvento(
-                                          context),
+                                      onPressed: () =>
+                                          confirmarSaidaEvento(context),
                                       icon: const Icon(Icons.exit_to_app,
                                           color: Colors.red),
                                       label: const Text("Sair",
