@@ -106,36 +106,56 @@ class _ConvidadosPageState extends State<ConvidadosPage> {
   }
 
   Future<void> _adicionarConvidados() async {
-  if (_amigosSelecionados.isEmpty) return;
+    if (_amigosSelecionados.isEmpty) return;
 
-  setState(() => _isLoading = true);
+    setState(() => _isLoading = true);
 
-  try {
-    await ConviteService().enviarConvites(widget.evento.id, _amigosSelecionados);
+    try {
+      await ConviteService()
+          .enviarConvites(widget.evento.id, _amigosSelecionados);
 
-    // Atualiza localmente as listas
-    final convidadosNovos = _amigos
-        .where((amigo) => _amigosSelecionados.contains(amigo.id))
-        .toList();
+      // Atualiza localmente as listas
+      final convidadosNovos = _amigos
+          .where((amigo) => _amigosSelecionados.contains(amigo.id))
+          .toList();
 
-    setState(() {
-      _amigos.removeWhere((amigo) => _amigosSelecionados.contains(amigo.id));
-      _convidados.addAll(convidadosNovos);
-      _amigosSelecionados.clear();
-    });
+      setState(() {
+        _amigos.removeWhere((amigo) => _amigosSelecionados.contains(amigo.id));
+        _convidados.addAll(convidadosNovos);
+        _amigosSelecionados.clear();
+      });
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Amigos convidados com sucesso!')),
-    );
-  } catch (_) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Erro ao convidar amigos')),
-    );
-  } finally {
-    setState(() => _isLoading = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Amigos convidados com sucesso!')),
+      );
+    } catch (_) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Erro ao convidar amigos')),
+      );
+    } finally {
+      setState(() => _isLoading = false);
+    }
   }
-}
 
+  Future<void> removerConvidado(String usuarioId) async {
+    try {
+      await ConviteService().removerConvite(widget.evento.id, usuarioId);
+
+      setState(() {
+        _convidados.removeWhere((convidado) => convidado.id == usuarioId);
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Convite removido com sucesso!')),
+      );
+    } catch (_) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Erro ao remover convite')),
+      );
+    } finally {
+      setState(() => _isLoading = false);
+    }
+  }
 
   Future<void> _abrirModalConvidarAmigos() async {
     if (_amigos.isEmpty && !_nenhumAmigo) {
@@ -287,6 +307,16 @@ class _ConvidadosPageState extends State<ConvidadosPage> {
                             return ListTile(
                               leading: const Icon(Icons.person),
                               title: Text(_convidados[index].nome),
+                              trailing: widget.evento.isAutor == true
+                                  ? IconButton(
+                                      icon: const Icon(Icons.remove_circle,
+                                          color: Colors.red),
+                                      tooltip: 'Remover convite',
+                                      onPressed: () {
+                                        removerConvidado(_convidados[index].id);
+                                      },
+                                    )
+                                  : null,
                             );
                           },
                         ),

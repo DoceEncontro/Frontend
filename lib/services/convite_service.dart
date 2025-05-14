@@ -23,6 +23,20 @@ class ConviteService {
     }
   }
 
+  Future<void> removerConvite(String eventoId, String usuarioId) async {
+    final token = await TokenService.obterToken();
+
+    final response =
+        await http.delete(Uri.parse('$baseUrl/$eventoId/$usuarioId'), headers: {
+      'Content-Type': 'application/json',
+      'Authorization': 'Bearer $token',
+    });
+
+    if (response.statusCode != 200 && response.statusCode != 201) {
+      throw Exception('Erro ao remover convites');
+    }
+  }
+
   Future<List<Map<String, dynamic>>> listarConvitesUsuario() async {
     final token = await TokenService.obterToken();
 
