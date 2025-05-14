@@ -29,12 +29,14 @@ class _ConvidadosPageState extends State<ConvidadosPage> {
   bool _carregandoAmigos = false;
   bool _nenhumAmigo = false;
   List<String> _amigosSelecionados = [];
+  List<Usuario> _convidadosFiltrados = [];
 
   final baseUrl = dotenv.env['BASE_URL']?.replaceAll('%23', '#');
 
   @override
   void initState() {
     super.initState();
+        _nomeController.addListener(_filtrarConvidados); // <- escuta a digitação
     _carregarConvidados();
   }
 
@@ -97,13 +99,25 @@ class _ConvidadosPageState extends State<ConvidadosPage> {
       // Por enquanto, vamos simular com dados fictícios:
       final lista =
           await ConvidadoService().buscarConvidados(widget.evento.id!);
-      setState(() => _convidados = lista);
+      setState(() {
+        _convidados = lista;
+        _convidadosFiltrados = lista;
+      });
     } catch (_) {
       setState(() => _convidados = []);
     } finally {
       setState(() => _carregandoLista = false);
     }
   }
+
+  void _filtrarConvidados() {
+  final query = _nomeController.text.toLowerCase();
+  setState(() {
+    _convidadosFiltrados = _convidados
+        .where((convidado) => convidado.nome.toLowerCase().contains(query))
+        .toList();
+  });
+}
 
   Future<void> _adicionarConvidados() async {
     if (_amigosSelecionados.isEmpty) return;
@@ -233,7 +247,7 @@ class _ConvidadosPageState extends State<ConvidadosPage> {
             TextField(
               controller: _nomeController,
               decoration: const InputDecoration(
-                labelText: 'Nome do Convidado',
+                labelText: 'Pesquisar convidado',
                 border: OutlineInputBorder(),
               ),
             ),
@@ -259,8 +273,6 @@ class _ConvidadosPageState extends State<ConvidadosPage> {
                 const SizedBox(width: 10),
                 TextButton.icon(
                   onPressed: () {
-                    final baseUrl =
-                        dotenv.env['BASE_URL']?.replaceAll('%23', '#') ?? '';
                     final conviteUrl =
                         '$baseUrl/convite?eventoId=${widget.evento.id}';
                     final mensagem =
@@ -294,7 +306,7 @@ class _ConvidadosPageState extends State<ConvidadosPage> {
             Expanded(
               child: _carregandoLista
                   ? const Center(child: CircularProgressIndicator())
-                  : _convidados.isEmpty
+                  : _convidadosFiltrados.isEmpty
                       ? const Center(
                           child: Text(
                             '📌 Nenhum convidado encontrado.',
@@ -302,19 +314,19 @@ class _ConvidadosPageState extends State<ConvidadosPage> {
                           ),
                         )
                       : ListView.builder(
-                          itemCount: _convidados.length,
+                          itemCount: _convidadosFiltrados.length,
                           itemBuilder: (context, index) {
+                            final convidado = _convidadosFiltrados[index];
                             return ListTile(
                               leading: const Icon(Icons.person),
-                              title: Text(_convidados[index].nome),
+                              title: Text(convidado.nome),
                               trailing: widget.evento.isAutor == true
                                   ? IconButton(
                                       icon: const Icon(Icons.remove_circle,
                                           color: Colors.red),
                                       tooltip: 'Remover convite',
-                                      onPressed: () {
-                                        removerConvidado(_convidados[index].id);
-                                      },
+                                      onPressed: () =>
+                                          removerConvidado(convidado.id),
                                     )
                                   : null,
                             );
@@ -325,5 +337,11 @@ class _ConvidadosPageState extends State<ConvidadosPage> {
         ),
       ),
     );
+  }
+
+  @override
+  void dispose() {
+    _nomeController.dispose();
+    super.dispose();
   }
 }
