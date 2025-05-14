@@ -1,3 +1,5 @@
+import 'package:festora/controllers/evento_controller.dart';
+import 'package:festora/services/evento_service.dart';
 import 'package:festora/widgets/dialogs/select_tipo_cha_dialog.dart';
 import 'package:flutter/material.dart';
 import 'package:festora/pages/menu/buscar_page.dart';
@@ -7,6 +9,7 @@ import 'package:festora/pages/menu/home_page.dart';
 import 'package:festora/services/token_service.dart';
 import 'package:festora/widgets/appBar/barra_de_navegacao.dart';
 import 'package:go_router/go_router.dart';
+import 'package:provider/provider.dart';
 
 class HomeSectionPage extends StatefulWidget {
   const HomeSectionPage({super.key});
@@ -15,6 +18,8 @@ class HomeSectionPage extends StatefulWidget {
   @override
   State<HomeSectionPage> createState() => _HomeSectionPageState();
 }
+
+bool isCarregado = false;
 
 class _HomeSectionPageState extends State<HomeSectionPage> {
   int _currentIndex = 0;
@@ -38,11 +43,22 @@ class _HomeSectionPageState extends State<HomeSectionPage> {
   void initState() {
     super.initState();
     _verificarLogin();
+    carregarEventosAtivos();
   }
 
   Future<void> _verificarLogin() async {
     await Future.delayed(const Duration(milliseconds: 200));
     await TokenService.verificarToken(context);
+  }
+
+  Future<void> carregarEventosAtivos() async {
+    if (!isCarregado) {
+      final eventos = await EventoService().listarEventosAtivos();
+
+      Provider.of<EventoController>(context, listen: false).setEventos(eventos);
+
+      isCarregado = true;
+    }
   }
 
   void _onItemTapped(int index) {
@@ -90,10 +106,7 @@ class _HomeSectionPageState extends State<HomeSectionPage> {
         extra: tipoEscolhido,
       );
 
-      if (result == 'evento_criado') {
-        _homeKey.currentState?.carregarEventosAtivos();
-        _listagemKey.currentState?.carregarEventos();
-      }
+      if (result == 'evento_criado') {}
     }
   }
 }

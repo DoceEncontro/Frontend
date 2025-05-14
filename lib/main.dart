@@ -1,16 +1,21 @@
+import 'package:festora/controllers/evento_controller.dart';
 import 'package:festora/pages/navigation/router.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:provider/provider.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  try {
-await dotenv.load();
-  } catch (e) {
-    print("Erro ao carregar o .env: $e");
-  }
-  
-  runApp(const MyApp());
+  await dotenv.load();
+
+  runApp(
+    MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (_) => EventoController()),
+      ],
+      child: const MyApp(),
+    ),
+  );
 }
 
 class MyApp extends StatelessWidget {

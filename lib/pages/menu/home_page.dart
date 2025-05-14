@@ -1,3 +1,4 @@
+import 'package:festora/controllers/evento_controller.dart';
 import 'package:festora/utils/redirecionar_util.dart';
 import 'package:festora/utils/rota_anterior_utils.dart';
 import 'package:flutter/material.dart';
@@ -12,6 +13,7 @@ import 'package:intl/intl.dart';
 import 'dart:async';
 import 'package:go_router/go_router.dart';
 import 'package:festora/pages/event/ver_evento/detalhes_evento_page.dart';
+import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:share_plus/share_plus.dart';
 
@@ -26,7 +28,6 @@ class HomePage extends StatefulWidget {
 
 class HomePageState extends State<HomePage> {
   late u.UsuarioDetailsModel usuario;
-  List<EventoModel> chas = [];
   late String usuarioNome = 'Carregando...';
   Timer? _tokenTimer;
 
@@ -46,16 +47,8 @@ class HomePageState extends State<HomePage> {
   }
 
   Future<void> _carregarDados() async {
-    await carregarEventosAtivos();
     await carregarUsuario();
     TokenService.verificarToken(context);
-  }
-
-  Future<void> carregarEventosAtivos() async {
-    final eventos = await EventoService().listarEventosAtivos();
-    setState(() {
-      chas = eventos;
-    });
   }
 
   Future<void> carregarUsuario() async {
@@ -64,6 +57,14 @@ class HomePageState extends State<HomePage> {
       usuario = buscarUsuario;
       usuarioNome = buscarUsuario.nome;
     });
+  }
+
+  Future<void> desativarEvento(String eventoId) async {
+    try {
+      await EventoService().desativarEvento(eventoId);
+
+      Provider.of<EventoController>(context, listen: false).excluirEventoPorId(eventoId);
+    } catch (e) {}
   }
 
   // Future<void> _enviarMensagemWhatsApp() async {
@@ -88,171 +89,161 @@ class HomePageState extends State<HomePage> {
   ];
 
   @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: () => FocusScope.of(context).unfocus(),
-      child: Scaffold(
-        backgroundColor: const Color(0xFFF3F3F3),
-        appBar: GradientAppBar(usuarioNome),
-        body: RefreshIndicator(
-          onRefresh: _carregarDados,
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 16),
-            child: Column(
-              children: [
-                if (chas.isNotEmpty)
-                  SizedBox(
-                    height: 150,
-                    child: ListView.builder(
-                      scrollDirection: Axis.horizontal,
-                      itemCount: chas.length,
-                      itemBuilder: (context, index) {
-                        final evento = chas[index];
-                        return Padding(
-                          padding: const EdgeInsets.only(right: 12),
-                          child: SizedBox(
-                            width: 250,
-                            child: AnimatedGradientBorderContainer(
-                              child: Material(
-                                color: Colors.transparent,
+Widget build(BuildContext context) {
+  final chas = Provider.of<EventoController>(context).eventos;
+
+  return GestureDetector(
+    onTap: () => FocusScope.of(context).unfocus(),
+    child: Scaffold(
+      backgroundColor: const Color(0xFFF3F3F3),
+      appBar: GradientAppBar(usuarioNome),
+      body: RefreshIndicator(
+        onRefresh: _carregarDados,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 16),
+          child: Column(
+            children: [
+              if (chas.isNotEmpty)
+                SizedBox(
+                  height: 150,
+                  child: ListView.builder(
+                    scrollDirection: Axis.horizontal,
+                    itemCount: chas.length,
+                    itemBuilder: (context, index) {
+                      final evento = chas[index];
+                      return Padding(
+                        padding: const EdgeInsets.only(right: 12),
+                        child: SizedBox(
+                          width: 250,
+                          child: AnimatedGradientBorderContainer(
+                            child: Material(
+                              color: Colors.transparent,
+                              borderRadius: BorderRadius.circular(13),
+                              child: InkWell(
                                 borderRadius: BorderRadius.circular(13),
-                                child: InkWell(
-                                  borderRadius: BorderRadius.circular(13),
-                                  splashColor: Colors.transparent,
-                                  highlightColor:
-                                      const Color.fromARGB(255, 233, 245, 255),
-                                  onTap: () {
-                                    RotaAnteriorUtils.setRota(context);
-                                    final eventoId = evento.id;
-                                    if (eventoId != null) {
-                                      Redirecionar()
-                                          .eventoDetails(context, eventoId);
-                                    }
-                                  },
-                                  onLongPress: () {
-                                    // Durante o long press, aplicamos efeitos visualmente
-                                    setState(() {
-                                      // Ativa os efeitos temporariamente, se necessário
-                                    });
-                                    _mostrarOpcoesEvento(context, evento);
-                                  },
-                                  onHighlightChanged: (isHighlighted) {
-                                    if (isHighlighted) {
-                                      // Aqui, você poderia acionar um efeito de highlight visual opcional,
-                                    }
-                                  },
-                                  splashFactory: InkSplash
-                                      .splashFactory, // permite efeito de splash no longPress
-                                  child: Ink(
-                                    decoration: BoxDecoration(
-                                      borderRadius: BorderRadius.circular(13),
-                                    ),
-                                    child: Padding(
-                                      padding: const EdgeInsets.all(16),
-                                      child: Column(
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.spaceBetween,
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: [
-                                          Column(
-                                            crossAxisAlignment:
-                                                CrossAxisAlignment.start,
-                                            children: [
-                                              Text(
-                                                evento.titulo ?? '',
-                                                overflow: TextOverflow.ellipsis,
-                                                style: const TextStyle(
-                                                  fontWeight: FontWeight.bold,
-                                                  fontSize: 16,
-                                                  color: Colors.black,
-                                                ),
+                                splashColor: Colors.transparent,
+                                highlightColor: const Color.fromARGB(255, 233, 245, 255),
+                                onTap: () {
+                                  RotaAnteriorUtils.setRota(context);
+                                  final eventoId = evento.id;
+                                  if (eventoId != null) {
+                                    Redirecionar().eventoDetails(context, eventoId);
+                                  }
+                                },
+                                onLongPress: () {
+                                  setState(() {});
+                                  _mostrarOpcoesEvento(context, evento);
+                                },
+                                onHighlightChanged: (isHighlighted) {},
+                                splashFactory: InkSplash.splashFactory,
+                                child: Ink(
+                                  decoration: BoxDecoration(
+                                    borderRadius: BorderRadius.circular(13),
+                                  ),
+                                  child: Padding(
+                                    padding: const EdgeInsets.all(16),
+                                    child: Column(
+                                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Column(
+                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          children: [
+                                            Text(
+                                              evento.titulo ?? '',
+                                              overflow: TextOverflow.ellipsis,
+                                              style: const TextStyle(
+                                                fontWeight: FontWeight.bold,
+                                                fontSize: 16,
+                                                color: Colors.black,
                                               ),
-                                              const SizedBox(height: 6),
-                                              Text(
-                                                evento.descricao ?? '',
-                                                overflow: TextOverflow.ellipsis,
-                                                maxLines: 2,
-                                                style: const TextStyle(
-                                                  fontSize: 12,
-                                                  color: Colors.black54,
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-                                          Text(
-                                            _formatarData(evento.data),
-                                            style: const TextStyle(
-                                              fontSize: 12,
-                                              color: Colors.black54,
                                             ),
+                                            const SizedBox(height: 6),
+                                            Text(
+                                              evento.descricao ?? '',
+                                              overflow: TextOverflow.ellipsis,
+                                              maxLines: 2,
+                                              style: const TextStyle(
+                                                fontSize: 12,
+                                                color: Colors.black54,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                        Text(
+                                          _formatarData(evento.data),
+                                          style: const TextStyle(
+                                            fontSize: 12,
+                                            color: Colors.black54,
                                           ),
-                                        ],
-                                      ),
+                                        ),
+                                      ],
                                     ),
                                   ),
                                 ),
                               ),
                             ),
                           ),
-                        );
-                      },
-                    ),
-                  ),
-                if (chas.isNotEmpty) const SizedBox(height: 20),
-                const Divider(thickness: 1, color: Colors.black45),
-                const SizedBox(height: 12),
-                Expanded(
-                  child: GridView.count(
-                    crossAxisCount: 3,
-                    mainAxisSpacing: 16,
-                    crossAxisSpacing: 16,
-                    childAspectRatio: 1,
-                    children: funcoes.map((item) {
-                      return GestureDetector(
-                        onTap: () {
-                          if (item['label'] == 'Criar Evento') {
-                            widget.onCreatePressed?.call();
-                          } else if (item['label'] == 'Agenda') {
-                            GoRouter.of(context).pushNamed('agenda');
-                          } else if (item['label'] == 'Amigos') {
-                            GoRouter.of(context).pushNamed('amigos');
-                          }
-                        },
-                        child: Container(
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            border: Border.all(color: Colors.black45),
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(item['icon'], size: 30, color: Colors.black),
-                              const SizedBox(height: 8),
-                              Text(
-                                item['label'],
-                                textAlign: TextAlign.center,
-                                style: const TextStyle(
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.w500,
-                                  color: Colors.black,
-                                ),
-                              ),
-                            ],
-                          ),
                         ),
                       );
-                    }).toList(),
+                    },
                   ),
                 ),
-              ],
-            ),
+              if (chas.isNotEmpty) const SizedBox(height: 20),
+              const Divider(thickness: 1, color: Colors.black45),
+              const SizedBox(height: 12),
+              Expanded(
+                child: GridView.count(
+                  crossAxisCount: 3,
+                  mainAxisSpacing: 16,
+                  crossAxisSpacing: 16,
+                  childAspectRatio: 1,
+                  children: funcoes.map((item) {
+                    return GestureDetector(
+                      onTap: () {
+                        if (item['label'] == 'Criar Evento') {
+                          widget.onCreatePressed?.call();
+                        } else if (item['label'] == 'Agenda') {
+                          GoRouter.of(context).pushNamed('agenda');
+                        } else if (item['label'] == 'Amigos') {
+                          GoRouter.of(context).pushNamed('amigos');
+                        }
+                      },
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          border: Border.all(color: Colors.black45),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(item['icon'], size: 30, color: Colors.black),
+                            const SizedBox(height: 8),
+                            Text(
+                              item['label'],
+                              textAlign: TextAlign.center,
+                              style: const TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w500,
+                                color: Colors.black,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  }).toList(),
+                ),
+              ),
+            ],
           ),
         ),
       ),
-    );
-  }
+    ),
+  );
+}
+
 
   String _formatarData(String? isoDate) {
     if (isoDate == null) return '';
@@ -288,7 +279,6 @@ class HomePageState extends State<HomePage> {
                       final result = await context
                           .pushNamed<String>('criar-evento', extra: evento);
                       if (result == 'evento_editado') {
-                        await carregarEventosAtivos();
                         ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(
                               content: Text('Evento atualizado com sucesso!')),
@@ -325,8 +315,10 @@ class HomePageState extends State<HomePage> {
                                   child: const Text('Cancelar'),
                                 ),
                                 ElevatedButton(
-                                  onPressed: () =>
-                                      Navigator.of(context).pop(true),
+                                  onPressed: () => {
+                                    desativarEvento(evento.id!),
+                                    Navigator.of(context).pop(true),
+                                  },
                                   style: ElevatedButton.styleFrom(
                                     backgroundColor: Colors.red,
                                   ),
@@ -344,8 +336,6 @@ class HomePageState extends State<HomePage> {
                   if (ehAutor) {
                     bool confirmado = await _confirmarExclusao(context);
                     if (confirmado) {
-                      await EventoService().desativarEvento(evento.id!);
-                      await carregarEventosAtivos();
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(
                           content: Text('Evento excluído com sucesso!'),

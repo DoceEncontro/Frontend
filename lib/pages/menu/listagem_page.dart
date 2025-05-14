@@ -1,3 +1,4 @@
+import 'package:festora/controllers/evento_controller.dart';
 import 'package:festora/utils/redirecionar_util.dart';
 import 'package:festora/utils/rota_anterior_utils.dart';
 import 'package:flutter/material.dart';
@@ -5,6 +6,7 @@ import 'package:festora/models/evento_model.dart';
 import 'package:festora/services/evento_service.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
+import 'package:provider/provider.dart';
 
 class ListagemPage extends StatefulWidget {
   static const String name = 'listagem';
@@ -16,21 +18,11 @@ class ListagemPage extends StatefulWidget {
 }
 
 class ListagemPageState extends State<ListagemPage> {
-  List<EventoModel> _eventos = [];
-  bool _carregando = true;
+  bool _carregando = false;
 
   @override
   void initState() {
     super.initState();
-    carregarEventos();
-  }
-
-  Future<void> carregarEventos() async {
-    final eventos = await EventoService().listarEventosAtivos();
-    setState(() {
-      _eventos = eventos;
-      _carregando = false;
-    });
   }
 
   String _formatarData(String? isoDate) {
@@ -45,6 +37,8 @@ class ListagemPageState extends State<ListagemPage> {
 
   @override
   Widget build(BuildContext context) {
+    final eventos = Provider.of<EventoController>(context).eventos;
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Detalhes do Evento'),
@@ -59,13 +53,13 @@ class ListagemPageState extends State<ListagemPage> {
       backgroundColor: const Color(0xFFF3F3F3),
       body: _carregando
           ? const Center(child: CircularProgressIndicator())
-          : _eventos.isEmpty
+          : eventos.isEmpty
               ? const Center(child: Text('Nenhum evento encontrado.'))
               : ListView.builder(
                   padding: const EdgeInsets.all(16),
-                  itemCount: _eventos.length,
+                  itemCount: eventos.length,
                   itemBuilder: (context, index) {
-                    final evento = _eventos[index];
+                    final evento = eventos[index];
 
                     return InkWell(
                       borderRadius: BorderRadius.circular(12),
@@ -125,7 +119,6 @@ class ListagemPageState extends State<ListagemPage> {
                                         extra: evento,
                                       );
                                       if (result == 'evento_editado') {
-                                        await carregarEventos();
                                         if (context.mounted) {
                                           ScaffoldMessenger.of(context)
                                               .showSnackBar(
@@ -176,7 +169,6 @@ class ListagemPageState extends State<ListagemPage> {
                                         final sucesso = await EventoService()
                                             .desativarEvento(evento.id!);
                                         if (sucesso) {
-                                          await carregarEventos();
                                           if (context.mounted) {
                                             ScaffoldMessenger.of(context)
                                                 .showSnackBar(

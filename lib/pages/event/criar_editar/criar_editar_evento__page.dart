@@ -1,3 +1,5 @@
+import 'package:festora/controllers/evento_controller.dart';
+import 'package:festora/exceptions/EventoFormException.dart';
 import 'package:festora/models/criar_evento_erro_model.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -6,6 +8,7 @@ import 'package:festora/services/evento_service.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:festora/widgets/containers/animated_gradient_border_container.dart';
+import 'package:provider/provider.dart';
 
 class CriarEventoPage extends StatefulWidget {
   final String? tipoEvento;
@@ -286,7 +289,7 @@ class _CriarEventoPageState extends State<CriarEventoPage> {
         id: widget.evento?.id,
         titulo: tituloController.text,
         descricao: descricaoController.text,
-        tipo: tipoSelecionado, // <- aqui
+        tipo: tipoSelecionado,
         data: selectedDate?.toIso8601String() ?? '',
         local: localController.text,
         estado: estadoController.text,
@@ -295,15 +298,18 @@ class _CriarEventoPageState extends State<CriarEventoPage> {
         numero: int.tryParse(numeroController.text) ?? 0,
       );
 
-      (bool, EventoErroModel) response;
+      try {
+        EventoModel response;
+        if (widget.evento != null) {
+          response = await EventoService().editarEvento(evento);
+          Provider.of<EventoController>(context, listen: false)
+              .editarEventoPorId(response);
+        } else {
+          response = await EventoService().criarEvento(evento);
+          Provider.of<EventoController>(context, listen: false)
+              .adicionarEvento(response);
+        }
 
-      if (widget.evento != null) {
-        response = await EventoService().editarEvento(evento);
-      } else {
-        response = await EventoService().criarEvento(evento);
-      }
-
-      if (response.$1) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
               content: Text(widget.evento != null
@@ -311,16 +317,18 @@ class _CriarEventoPageState extends State<CriarEventoPage> {
                   : 'Evento criado com sucesso!')),
         );
         context.pop(widget.evento != null ? 'evento_editado' : 'evento_criado');
-      } else {
-        if (response.$2.temErros()) {
-          setState(() {
-            _eventoErroModel = response.$2;
-          });
-        } else {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Erro ao salvar evento')),
-          );
-        }
+      } on EventoFormException catch (e) {
+        setState(() {
+          _eventoErroModel = e.errors; // <-- Aqui pega os erros por campo
+        });
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Erro ao salvar evento')),
+        );
+      } catch (e) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Erro inesperado ao salvar evento')),
+        );
       }
     }
   }

@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:festora/exceptions/EventoFormException.dart';
 import 'package:festora/models/criar_evento_erro_model.dart';
 import 'package:festora/models/evento_details_model.dart';
 import 'package:festora/models/usuario_response_model.dart';
@@ -11,33 +12,35 @@ import 'package:festora/config/api_config.dart';
 class EventoService {
   static final String baseUrl = '${ApiConfig.baseUrl}/eventos';
 
-  Future<(bool, EventoErroModel)> criarEvento(EventoModel evento) async {
-    final token = await TokenHelper.getToken();
-    try {
-      final response = await http.post(
-        Uri.parse(baseUrl),
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer $token',
-        },
-        body: jsonEncode(evento.toJson()),
-      );
+  Future<EventoModel> criarEvento(EventoModel evento) async {
+  final token = await TokenHelper.getToken();
+  try {
+    final response = await http.post(
+      Uri.parse(baseUrl),
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
+      body: jsonEncode(evento.toJson()),
+    );
 
-      if (response.statusCode == 201 || response.statusCode == 200) {
-        return (true, EventoErroModel());
-      } else if (response.statusCode == 400) {
-        final decodedBody = utf8.decode(response.bodyBytes);
-        final Map<String, dynamic> responseData = jsonDecode(decodedBody);
-        final errors = EventoErroModel.fromJson(responseData);
-        return (false, errors);
-      } else {
-        return (false, EventoErroModel());
-      }
-    } catch (e) {
-      print('Erro na comunicação: $e');
-      return (false, EventoErroModel());
+    if (response.statusCode == 201 || response.statusCode == 200) {
+      final data = jsonDecode(utf8.decode(response.bodyBytes));
+      return EventoModel.fromJson(data);
+    } else if (response.statusCode == 400) {
+      final decodedBody = utf8.decode(response.bodyBytes);
+      final Map<String, dynamic> responseData = jsonDecode(decodedBody);
+      final erros = EventoErroModel.fromJson(responseData);
+      throw EventoFormException(erros); // <-- lançando erro com os campos
+    } else {
+      throw EventoFormException(EventoErroModel());
     }
+  } catch (e) {
+    if (e is EventoFormException) rethrow;
+    throw EventoFormException(EventoErroModel());
   }
+}
+
 
   Future<(bool, String)> participar(String eventoId) async {
     final token = await TokenHelper.getToken();
@@ -89,7 +92,7 @@ class EventoService {
 
     if (response.statusCode == 200) {
       final List<dynamic> dados = jsonDecode(utf8.decode(response.bodyBytes));
-    return dados.map((item) => Usuario.fromJson(item)).toList();
+      return dados.map((item) => Usuario.fromJson(item)).toList();
     } else {
       throw Exception('Erro ao buscar convidados');
     }
@@ -137,7 +140,7 @@ class EventoService {
     }
   }
 
-  Future<(bool, EventoErroModel)> editarEvento(EventoModel evento) async {
+  Future<EventoModel> editarEvento(EventoModel evento) async {
     final token = await TokenHelper.getToken();
     try {
       final response = await http.put(
@@ -149,19 +152,20 @@ class EventoService {
         body: jsonEncode(evento.toJson()),
       );
 
-      if (response.statusCode == 201 || response.statusCode == 200) {
-        return (true, EventoErroModel());
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        final data = jsonDecode(utf8.decode(response.bodyBytes));
+        return EventoModel.fromJson(data);
       } else if (response.statusCode == 400) {
         final decodedBody = utf8.decode(response.bodyBytes);
         final Map<String, dynamic> responseData = jsonDecode(decodedBody);
         final errors = EventoErroModel.fromJson(responseData);
-        return (false, errors);
+        throw EventoFormException(errors);
       } else {
-        return (false, EventoErroModel());
+        throw EventoFormException(EventoErroModel());
       }
     } catch (e) {
       print('Erro na comunicação: $e');
-      return (false, EventoErroModel());
+      throw EventoFormException(EventoErroModel());
     }
   }
 
@@ -187,7 +191,8 @@ class EventoService {
     }
   }
 
-  Future<(bool, String)> retirarParticipante(String eventoId, String usuarioId) async {
+  Future<(bool, String)> retirarParticipante(
+      String eventoId, String usuarioId) async {
     final token = await TokenHelper.getToken();
     try {
       final response = await http.delete(
