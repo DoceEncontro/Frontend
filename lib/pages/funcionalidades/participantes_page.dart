@@ -127,7 +127,7 @@ class _ParticipantesPageState extends State<ParticipantesPage> {
 }
 
   Future<void> confirmarSaidaEvento(
-      BuildContext context, String usuarioId) async {
+      BuildContext context) async {
     final confirmacao = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
@@ -250,7 +250,7 @@ class _ParticipantesPageState extends State<ParticipantesPage> {
                                           widget.evento.organizador.id)
                                     TextButton.icon(
                                       onPressed: () => confirmarSaidaEvento(
-                                          context, participante.id),
+                                          context),
                                       icon: const Icon(Icons.exit_to_app,
                                           color: Colors.red),
                                       label: const Text("Sair",
