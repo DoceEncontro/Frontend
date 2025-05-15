@@ -87,7 +87,7 @@ Widget build(BuildContext context) {
     onTap: () => FocusScope.of(context).unfocus(),
     child: Scaffold(
       backgroundColor: const Color(0xFFF3F3F3),
-      appBar: GradientAppBar(usuario.nome),
+      appBar: GradientAppBar(usuario!.nome),
       body: RefreshIndicator(
         onRefresh: _carregarDados,
         child: Padding(

@@ -259,7 +259,7 @@ class _ParticipantesPageState extends State<ParticipantesPage> {
                                       label: const Text("Remover",
                                           style: TextStyle(color: Colors.red)),
                                     )
-                                  else if (usuario.id == participante.id &&
+                                  else if (usuario!.id == participante.id &&
                                       participante.id !=
                                           widget.evento.organizador.id)
                                     TextButton.icon(

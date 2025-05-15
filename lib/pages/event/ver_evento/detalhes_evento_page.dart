@@ -2,10 +2,14 @@ import 'dart:convert';
 import 'package:festora/controllers/evento_controller.dart';
 import 'package:festora/controllers/participantes_controller.dart';
 import 'package:festora/controllers/presente_controller.dart';
+import 'package:festora/controllers/usuario_controller.dart';
 import 'package:festora/models/evento_details_model.dart';
 import 'package:festora/models/evento_model.dart';
+import 'package:festora/models/usuario_details_model.dart';
+import 'package:festora/models/usuario_response_model.dart';
 import 'package:festora/pages/funcionalidades/participantes_page.dart';
 import 'package:festora/pages/menu/home_section_page.dart';
+import 'package:festora/services/usuario_service.dart';
 import 'package:festora/utils/rota_anterior_utils.dart';
 import 'package:flutter/material.dart';
 import 'package:festora/services/evento_service.dart';
@@ -30,15 +34,16 @@ class _DetalhesEventoPageState extends State<DetalhesEventoPage> {
   bool isLoading = true;
   bool hasError = false;
 
+  late final UsuarioController _usuarioController;
   late final PresenteController _presenteController;
   late final ParticipantesController _participantesController;
 
   @override
   void initState() {
     super.initState();
-    carregarEvento();
-
     carregarControllers();
+
+    carregarDados();
   }
 
   @override
@@ -54,9 +59,16 @@ class _DetalhesEventoPageState extends State<DetalhesEventoPage> {
 
     _participantesController =
         Provider.of<ParticipantesController>(context, listen: false);
+
+    _usuarioController = Provider.of<UsuarioController>(context, listen: false);
   }
 
-  Future<void> carregarEvento() async {
+  Future<void> carregarDados() async {
+    if (_usuarioController.usuario == null) {
+      UsuarioDetailsModel usuario = await UsuarioService().obterUsuario();
+
+      _usuarioController.setUsuario(usuario);
+    }
     try {
       final (ok, eventoCarregado) =
           await EventoService().buscarEvento(widget.eventoId);
@@ -255,7 +267,7 @@ class _DetalhesEventoPageState extends State<DetalhesEventoPage> {
                                 setState(() {
                                   isLoading = true;
                                 });
-                                await carregarEvento(); // recarrega os dados do evento atualizado
+                                await carregarDados(); // recarrega os dados do evento atualizado
                               }
                             },
                           ),
