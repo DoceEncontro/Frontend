@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:festora/controllers/convidados_controller.dart';
 import 'package:festora/controllers/evento_controller.dart';
 import 'package:festora/controllers/participantes_controller.dart';
 import 'package:festora/controllers/presente_controller.dart';
@@ -37,6 +38,7 @@ class _DetalhesEventoPageState extends State<DetalhesEventoPage> {
   late final UsuarioController _usuarioController;
   late final PresenteController _presenteController;
   late final ParticipantesController _participantesController;
+  late final ConvidadosController _convidadosController;
 
   @override
   void initState() {
@@ -50,6 +52,9 @@ class _DetalhesEventoPageState extends State<DetalhesEventoPage> {
   void dispose() {
     _presenteController.limparPresentes();
     _participantesController.limparParticipantes();
+
+        _convidadosController.limparListas();
+
     super.dispose();
   }
 
@@ -61,6 +66,9 @@ class _DetalhesEventoPageState extends State<DetalhesEventoPage> {
         Provider.of<ParticipantesController>(context, listen: false);
 
     _usuarioController = Provider.of<UsuarioController>(context, listen: false);
+
+    _convidadosController =
+        Provider.of<ConvidadosController>(context, listen: false);
   }
 
   Future<void> carregarDados() async {

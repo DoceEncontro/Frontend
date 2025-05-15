@@ -1,3 +1,4 @@
+import 'package:festora/controllers/convidados_controller.dart';
 import 'package:festora/controllers/evento_controller.dart';
 import 'package:festora/controllers/participantes_controller.dart';
 import 'package:festora/controllers/presente_controller.dart';
@@ -29,6 +30,7 @@ class _ParticipantesPageState extends State<ParticipantesPage> {
   bool _carregando = true;
 
   late ParticipantesController participantesController;
+  late ConvidadosController convidadosController;
 
   List<Usuario> _participantesFiltrados = [];
 
@@ -38,6 +40,8 @@ class _ParticipantesPageState extends State<ParticipantesPage> {
     _pesquisaController.addListener(_filtrarParticipantes);
     participantesController =
         Provider.of<ParticipantesController>(context, listen: false);
+    convidadosController =
+        Provider.of<ConvidadosController>(context, listen: false);
     _carregarParticipantes();
   }
 
@@ -91,6 +95,14 @@ class _ParticipantesPageState extends State<ParticipantesPage> {
           .retirarParticipante(widget.evento.id, usuarioId);
 
       if (response.$1) {
+      final participanteRemovido = participantesController.participantes.firstWhere(
+        (p) => p.id == usuarioId,
+      );
+
+
+        convidadosController.adicionarAmigosDisponiveis(participanteRemovido);
+      
+
         participantesController.excluirParticipantePorId(usuarioId);
 
         setState(() {
@@ -159,8 +171,7 @@ class _ParticipantesPageState extends State<ParticipantesPage> {
         Provider.of<EventoController>(context, listen: false)
             .excluirEventoPorId(widget.evento.id);
         if (context.mounted) {
-            GoRouter.of(context).goNamed(HomeSectionPage.name);
-
+          GoRouter.of(context).goNamed(HomeSectionPage.name);
         }
       } else {
         String responseText = response.$2;

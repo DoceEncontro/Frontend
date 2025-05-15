@@ -1,3 +1,4 @@
+import 'package:festora/controllers/convidados_controller.dart';
 import 'package:festora/models/evento_details_model.dart';
 import 'package:festora/models/usuario_response_model.dart';
 import 'package:festora/services/amizade_service.dart';
@@ -5,6 +6,7 @@ import 'package:festora/services/convidado_service.dart';
 import 'package:festora/services/convite_service.dart';
 import 'package:festora/services/evento_service.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 
@@ -22,102 +24,80 @@ class ConvidadosPage extends StatefulWidget {
 class _ConvidadosPageState extends State<ConvidadosPage> {
   final TextEditingController _nomeController = TextEditingController();
   bool _isLoading = false;
-  List<Usuario> _convidados = []; // apenas nomes por enquanto
-  List<Usuario> _amigos = []; // apenas nomes por enquanto
-  List<Usuario> _participantes = [];
   bool _carregandoLista = true;
   bool _carregandoAmigos = false;
-  bool _nenhumAmigo = false;
   List<String> _amigosSelecionados = [];
   List<Usuario> _convidadosFiltrados = [];
+
+  late ConvidadosController convidadosController;
 
   final baseUrl = dotenv.env['BASE_URL']?.replaceAll('%23', '#');
 
   @override
   void initState() {
     super.initState();
-        _nomeController.addListener(_filtrarConvidados); // <- escuta a digitação
+    _nomeController.addListener(_filtrarConvidados); // <- escuta a digitação
+    convidadosController =
+        Provider.of<ConvidadosController>(context, listen: false);
     _carregarConvidados();
   }
 
   Future<void> carregarAmigosEParticipantes() async {
-    if (_nenhumAmigo) return; // já sabemos que não tem amigos
-
     setState(() {
       _carregandoAmigos = true;
-      _carregandoLista = true; // Inicia o carregamento dos participantes também
     });
+    if (!convidadosController.listasCarregadas) {
+      try {
+        final listaParticipantes =
+            await EventoService().listarParticipantes(widget.evento.id);
 
-    try {
-      // Carregar a lista de participantes
-      final listaParticipantes =
-          await EventoService().listarParticipantes(widget.evento.id);
+        final listaAmigos = await AmizadeService().listarAceitos();
 
-      // Carregar a lista de amigos aceitos
-      final listaAmigos = await AmizadeService().listarAceitos();
-
-      // Caso não haja amigos, defina a flag
-      if (listaAmigos.isEmpty) {
-        _nenhumAmigo = true;
-        _amigos = [];
-      } else {
-        // Filtra amigos que não estão na lista de convidados e não são participantes
-        final amigosFiltrados = listaAmigos.where((amigo) {
-          // Verifica se o amigo não está na lista de convidados e nem na lista de participantes
-          return !_convidados.any((convidado) => convidado.id == amigo.id) &&
-              !listaParticipantes
-                  .any((participante) => participante.id == amigo.id);
-        }).toList();
-
-        setState(() {
-          _amigos = amigosFiltrados;
-          if (_amigos.isEmpty) _nenhumAmigo = true; // todos já convidados
-        });
+        convidadosController.setListas(listaAmigos, listaParticipantes);
+      } catch (_) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Erro ao carregar amigos.')),
+        );
       }
-
-      // Adicionar participantes à lista _participantes
-      setState(() {
-        _participantes = listaParticipantes;
-      });
-    } catch (_) {
-      setState(() {
-        _amigos = [];
-        _participantes = [];
-      });
-    } finally {
-      setState(() {
-        _carregandoAmigos = false;
-        _carregandoLista = false; // Finaliza o carregamento dos participantes
-      });
     }
+    setState(() {
+      _carregandoAmigos = false;
+    });
   }
 
   Future<void> _carregarConvidados() async {
     setState(() => _carregandoLista = true);
-    try {
-      // Aqui você deve buscar os nomes dos convidados do backend
-      // Por enquanto, vamos simular com dados fictícios:
-      final lista =
-          await ConvidadoService().buscarConvidados(widget.evento.id!);
+    if (convidadosController.convidadosCarregados) {
       setState(() {
-        _convidados = lista;
-        _convidadosFiltrados = lista;
+        _convidadosFiltrados = convidadosController.convidados;
       });
-    } catch (_) {
-      setState(() => _convidados = []);
-    } finally {
-      setState(() => _carregandoLista = false);
+    } else {
+      try {
+        final lista =
+            await ConvidadoService().buscarConvidados(widget.evento.id);
+
+        convidadosController.setConvidados(lista);
+
+        setState(() {
+          _convidadosFiltrados = lista;
+        });
+      } catch (e) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Erro ao carregar convidados.')),
+        );
+      }
     }
+    setState(() => _carregandoLista = false);
   }
 
   void _filtrarConvidados() {
-  final query = _nomeController.text.toLowerCase();
-  setState(() {
-    _convidadosFiltrados = _convidados
-        .where((convidado) => convidado.nome.toLowerCase().contains(query))
-        .toList();
-  });
-}
+    final query = _nomeController.text.toLowerCase();
+    setState(() {
+      _convidadosFiltrados = convidadosController.amigos
+          .where((convidado) => convidado.nome.toLowerCase().contains(query))
+          .toList();
+    });
+  }
 
   Future<void> _adicionarConvidados() async {
     if (_amigosSelecionados.isEmpty) return;
@@ -129,13 +109,10 @@ class _ConvidadosPageState extends State<ConvidadosPage> {
           .enviarConvites(widget.evento.id, _amigosSelecionados);
 
       // Atualiza localmente as listas
-      final convidadosNovos = _amigos
-          .where((amigo) => _amigosSelecionados.contains(amigo.id))
-          .toList();
+      convidadosController.adicionarConvidados(_amigosSelecionados);
 
       setState(() {
-        _amigos.removeWhere((amigo) => _amigosSelecionados.contains(amigo.id));
-        _convidados.addAll(convidadosNovos);
+        _convidadosFiltrados = convidadosController.convidados;
         _amigosSelecionados.clear();
       });
 
@@ -155,9 +132,13 @@ class _ConvidadosPageState extends State<ConvidadosPage> {
     try {
       await ConviteService().removerConvite(widget.evento.id, usuarioId);
 
+      convidadosController.excluirConvidadoPorId(usuarioId);
+
       setState(() {
-        _convidados.removeWhere((convidado) => convidado.id == usuarioId);
+        _convidadosFiltrados = convidadosController.convidados;
       });
+
+      convidadosController.atualizarAmigosDisponiveis();
 
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Convite removido com sucesso!')),
@@ -172,7 +153,8 @@ class _ConvidadosPageState extends State<ConvidadosPage> {
   }
 
   Future<void> _abrirModalConvidarAmigos() async {
-    if (_amigos.isEmpty && !_nenhumAmigo) {
+    if (convidadosController.amigos.isEmpty &&
+        !convidadosController.listasCarregadas) {
       await carregarAmigosEParticipantes();
     }
 
@@ -185,16 +167,17 @@ class _ConvidadosPageState extends State<ConvidadosPage> {
               title: const Text('Convidar Amigos'),
               content: _carregandoAmigos
                   ? const Center(child: CircularProgressIndicator())
-                  : (_nenhumAmigo || _amigos.isEmpty)
+                  : (convidadosController.listasCarregadas &&
+                          convidadosController.amigos.isEmpty)
                       ? const Text(
                           'Você não possui amigos disponíveis para convite.')
                       : SizedBox(
                           width: double.maxFinite,
                           child: ListView.builder(
                             shrinkWrap: true,
-                            itemCount: _amigos.length,
+                            itemCount: convidadosController.amigos.length,
                             itemBuilder: (context, index) {
-                              final amigo = _amigos[index];
+                              final amigo = convidadosController.amigos[index];
                               return CheckboxListTile(
                                 value: _amigosSelecionados.contains(amigo.id),
                                 title: Text(amigo.nome),
