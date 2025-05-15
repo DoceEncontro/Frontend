@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:festora/controllers/evento_controller.dart';
+import 'package:festora/controllers/participantes_controller.dart';
 import 'package:festora/controllers/presente_controller.dart';
 import 'package:festora/models/evento_details_model.dart';
 import 'package:festora/models/evento_model.dart';
@@ -30,20 +31,29 @@ class _DetalhesEventoPageState extends State<DetalhesEventoPage> {
   bool hasError = false;
 
   late final PresenteController _presenteController;
+  late final ParticipantesController _participantesController;
 
   @override
   void initState() {
     super.initState();
     carregarEvento();
 
-    _presenteController =
-        Provider.of<PresenteController>(context, listen: false);
+    carregarControllers();
   }
 
   @override
   void dispose() {
     _presenteController.limparPresentes();
+    _participantesController.limparParticipantes();
     super.dispose();
+  }
+
+  void carregarControllers() {
+    _presenteController =
+        Provider.of<PresenteController>(context, listen: false);
+
+    _participantesController =
+        Provider.of<ParticipantesController>(context, listen: false);
   }
 
   Future<void> carregarEvento() async {
@@ -56,7 +66,6 @@ class _DetalhesEventoPageState extends State<DetalhesEventoPage> {
         isLoading = false;
       });
     } catch (_) {
-
       if (!mounted) return;
       setState(() {
         hasError = true;
@@ -87,9 +96,10 @@ class _DetalhesEventoPageState extends State<DetalhesEventoPage> {
     if (confirmacao == true) {
       final response = await EventoService().sairEvento(evento.id);
       if (response.$1) {
+        Provider.of<EventoController>(context, listen: false)
+            .excluirEventoPorId(evento.id);
         if (context.mounted) {
-          context.goNamed(
-              HomeSectionPage.name); // Redireciona para a Home após sair
+          GoRouter.of(context).goNamed(HomeSectionPage.name);
         }
       } else {
         String responseText = response.$2;
@@ -282,15 +292,33 @@ class _DetalhesEventoPageState extends State<DetalhesEventoPage> {
 
                               if (confirm) {
                                 try {
-                                  await EventoService()
+                                  bool respose = await EventoService()
                                       .desativarEvento(evento.id!);
-                                  if (context.mounted) {
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      const SnackBar(
-                                          content: Text(
-                                              'Evento excluído com sucesso.')),
-                                    );
-                                    Navigator.of(context).pop();
+
+                                  if (respose) {
+                                    Provider.of<EventoController>(context,
+                                            listen: false)
+                                        .excluirEventoPorId(evento.id);
+
+                                    if (context.mounted) {
+                                      ScaffoldMessenger.of(context)
+                                          .showSnackBar(
+                                        const SnackBar(
+                                            content: Text(
+                                                'Evento excluído com sucesso.')),
+                                      );
+                                      GoRouter.of(context)
+                                          .goNamed(HomeSectionPage.name);
+                                    }
+                                  } else {
+                                    if (context.mounted) {
+                                      ScaffoldMessenger.of(context)
+                                          .showSnackBar(
+                                        const SnackBar(
+                                            content: Text(
+                                                'Erro ao excluir evento.')),
+                                      );
+                                    }
                                   }
                                 } catch (_) {
                                   if (context.mounted) {

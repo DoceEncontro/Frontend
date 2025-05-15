@@ -1,4 +1,5 @@
 import 'package:festora/controllers/evento_controller.dart';
+import 'package:festora/controllers/participantes_controller.dart';
 import 'package:festora/controllers/presente_controller.dart';
 import 'package:festora/controllers/usuario_controller.dart';
 import 'package:festora/models/usuario_response_model.dart';
@@ -17,6 +18,7 @@ void main() async {
         ChangeNotifierProvider(create: (_) => EventoController()),
         ChangeNotifierProvider(create: (_) => UsuarioController()),
         ChangeNotifierProvider(create: (_) => PresenteController()),
+        ChangeNotifierProvider(create: (_) => ParticipantesController()),
       ],
       child: const MyApp(),
     ),

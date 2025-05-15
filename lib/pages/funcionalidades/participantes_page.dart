@@ -1,3 +1,6 @@
+import 'package:festora/controllers/evento_controller.dart';
+import 'package:festora/controllers/participantes_controller.dart';
+import 'package:festora/controllers/presente_controller.dart';
 import 'package:festora/controllers/usuario_controller.dart';
 import 'package:festora/models/evento_details_model.dart';
 import 'package:festora/models/usuario_details_model.dart';
@@ -24,47 +27,57 @@ class ParticipantesPage extends StatefulWidget {
 class _ParticipantesPageState extends State<ParticipantesPage> {
   final TextEditingController _pesquisaController = TextEditingController();
   bool _carregando = true;
-  List<Usuario> _participantes = [];
+
+  late ParticipantesController participantesController;
+
   List<Usuario> _participantesFiltrados = [];
 
   @override
   void initState() {
     super.initState();
     _pesquisaController.addListener(_filtrarParticipantes);
+    participantesController =
+        Provider.of<ParticipantesController>(context, listen: false);
     _carregarParticipantes();
   }
 
   Future<void> _carregarParticipantes() async {
-    setState(() => _carregando = true);
-    try {
-      final lista = await EventoService().listarParticipantes(widget.evento.id);
+    if (!participantesController.isCarregado) {
+      setState(() => _carregando = true);
+      try {
+        final lista =
+            await EventoService().listarParticipantes(widget.evento.id);
 
-      // Organizar a lista colocando o organizador no topo
-      lista.sort((a, b) {
-        if (a.id == widget.evento.organizador.id)
-          return -1; // Organizador no topo
-        if (b.id == widget.evento.organizador.id) return 1;
-        return 0;
-      });
+        // Organizar a lista colocando o organizador no topo
+        lista.sort((a, b) {
+          if (a.id == widget.evento.organizador.id)
+            return -1; // Organizador no topo
+          if (b.id == widget.evento.organizador.id) return 1;
+          return 0;
+        });
 
+        participantesController.setParticipantes(lista);
+
+        setState(() {
+          _participantesFiltrados = lista;
+        });
+      } catch (_) {
+        setState(() {
+          _participantesFiltrados = [];
+        });
+      }
+    } else {
       setState(() {
-        _participantes = lista;
-        _participantesFiltrados = lista;
+        _participantesFiltrados = participantesController.participantes;
       });
-    } catch (_) {
-      setState(() {
-        _participantes = [];
-        _participantesFiltrados = [];
-      });
-    } finally {
-      setState(() => _carregando = false);
     }
+    setState(() => _carregando = false);
   }
 
   void _filtrarParticipantes() {
     final query = _pesquisaController.text.toLowerCase();
     setState(() {
-      _participantesFiltrados = _participantes
+      _participantesFiltrados = participantesController.participantes
           .where((p) => p.nome.toLowerCase().contains(query))
           .toList();
     });
@@ -74,18 +87,19 @@ class _ParticipantesPageState extends State<ParticipantesPage> {
     setState(() => _carregando = true);
     try {
       // Tenta retirar o participante da lista do evento
-      await EventoService().retirarParticipante(widget.evento.id, usuarioId);
+      (bool, String) response = await EventoService()
+          .retirarParticipante(widget.evento.id, usuarioId);
 
-      setState(() {
-        // Removendo o participante da lista de participantes
-        _participantes.removeWhere((usuario) => usuario.id == usuarioId);
-        _participantesFiltrados.removeWhere((usuario) =>
-            usuario.id == usuarioId); // Atualizando a lista filtrada também
-      });
+      if (response.$1) {
+        participantesController.excluirParticipantePorId(usuarioId);
+
+        setState(() {
+          _participantesFiltrados = participantesController.participantes;
+        });
+      }
     } catch (_) {
       // Caso ocorra um erro, limpa as listas
       setState(() {
-        _participantes = [];
         _participantesFiltrados = [];
       });
     } finally {
@@ -140,10 +154,13 @@ class _ParticipantesPageState extends State<ParticipantesPage> {
 
     if (confirmacao == true) {
       final response = await EventoService().sairEvento(widget.evento.id);
+
       if (response.$1) {
+        Provider.of<EventoController>(context, listen: false)
+            .excluirEventoPorId(widget.evento.id);
         if (context.mounted) {
-          context.goNamed(
-              HomeSectionPage.name); // Redireciona para a Home após sair
+            GoRouter.of(context).goNamed(HomeSectionPage.name);
+
         }
       } else {
         String responseText = response.$2;
@@ -163,6 +180,8 @@ class _ParticipantesPageState extends State<ParticipantesPage> {
   @override
   Widget build(BuildContext context) {
     final usuario = Provider.of<UsuarioController>(context).usuario;
+    final participantes =
+        Provider.of<ParticipantesController>(context).participantes;
 
     return Scaffold(
       appBar: AppBar(
