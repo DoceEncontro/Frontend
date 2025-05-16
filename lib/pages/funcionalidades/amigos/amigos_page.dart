@@ -17,9 +17,11 @@ class _AmigosPageState extends State<AmigosPage> with TickerProviderStateMixin {
   List<Amigo> amigos = [];
   List<Amigo> pendentes = [];
   List<Amigo> recebidos = [];
-
-  bool carregando = true;
   bool _isLoading = false;
+
+  bool carregandoAceitos = true;
+  bool carregandoPendentes = false;
+  bool carregandoRecebidos = false;
 
   final TextEditingController _emailController = TextEditingController();
   late TabController _tabController;
@@ -49,6 +51,7 @@ class _AmigosPageState extends State<AmigosPage> with TickerProviderStateMixin {
   }
 
   Future<void> carregarAmizades() async {
+    setState(() => carregandoAceitos = true);
     try {
       final aceitos = await AmizadeService().listarAmigosAceitos();
       setState(() {
@@ -59,11 +62,14 @@ class _AmigosPageState extends State<AmigosPage> with TickerProviderStateMixin {
         const SnackBar(content: Text('Erro ao carregar amigos.')),
       );
     } finally {
-      setState(() => carregando = false);
+      setState(() {
+        carregandoAceitos = false;
+      });
     }
   }
 
   Future<void> carregarPendentes() async {
+    setState(() => carregandoPendentes = true);
     try {
       final pendentes = await AmizadeService().listarPendentes();
       setState(() {
@@ -74,11 +80,12 @@ class _AmigosPageState extends State<AmigosPage> with TickerProviderStateMixin {
         const SnackBar(content: Text('Erro ao carregar amigos.')),
       );
     } finally {
-      setState(() => carregando = false);
+      setState(() => carregandoPendentes = false);
     }
   }
 
   Future<void> carregarRecebidos() async {
+    setState(() => carregandoRecebidos = true);
     try {
       final recebidos = await AmizadeService().listarRecebidos();
       setState(() {
@@ -89,7 +96,7 @@ class _AmigosPageState extends State<AmigosPage> with TickerProviderStateMixin {
         const SnackBar(content: Text('Erro ao carregar amigos.')),
       );
     } finally {
-      setState(() => carregando = false);
+      setState(() => carregandoRecebidos = false);
     }
   }
 
@@ -168,60 +175,57 @@ class _AmigosPageState extends State<AmigosPage> with TickerProviderStateMixin {
           ],
         ),
       ),
-      body: carregando
-          ? const Center(child: CircularProgressIndicator())
-          : Column(
-              children: [
-                Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: _buildCard(
-                    title: 'Adicionar Amigo 💌',
-                    child: Column(
-                      children: [
-                        TextField(
-                          controller: _emailController,
-                          decoration: InputDecoration(
-                            labelText: 'E-mail do Amigo',
-                            filled: true,
-                            fillColor: Colors.white,
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(height: 12),
-                        ElevatedButton.icon(
-                          onPressed: _isLoading ? null : _enviarSolicitacao,
-                          icon: const Icon(Icons.person_add_alt_1),
-                          label: const Text('Enviar Solicitação'),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFFE8A8E3),
-                            foregroundColor: Colors.white,
-                            padding: const EdgeInsets.symmetric(
-                                vertical: 14, horizontal: 24),
-                            textStyle:
-                                const TextStyle(fontWeight: FontWeight.bold),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(20),
-                            ),
-                          ),
-                        ),
-                      ],
+      body: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(16),
+            child: _buildCard(
+              title: 'Adicionar Amigo 💌',
+              child: Column(
+                children: [
+                  TextField(
+                    controller: _emailController,
+                    decoration: InputDecoration(
+                      labelText: 'E-mail do Amigo',
+                      filled: true,
+                      fillColor: Colors.white,
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
                     ),
                   ),
-                ),
-                Expanded(
-                  child: TabBarView(
-                    controller: _tabController,
-                    children: [
-                      _buildAmigosCard('Aceitos', amigos),
-                      _buildAmigosCard('Pendentes', pendentes),
-                      _buildAmigosCard('Recebidos', recebidos),
-                    ],
+                  const SizedBox(height: 12),
+                  ElevatedButton.icon(
+                    onPressed: _isLoading ? null : _enviarSolicitacao,
+                    icon: const Icon(Icons.person_add_alt_1),
+                    label: const Text('Enviar Solicitação'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFFE8A8E3),
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(
+                          vertical: 14, horizontal: 24),
+                      textStyle: const TextStyle(fontWeight: FontWeight.bold),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                    ),
                   ),
-                ),
+                ],
+              ),
+            ),
+          ),
+          Expanded(
+            child: TabBarView(
+              controller: _tabController,
+              children: [
+                _buildAmigosCard('Aceitos', amigos, carregandoAceitos),
+                _buildAmigosCard('Pendentes', pendentes, carregandoPendentes),
+                _buildAmigosCard('Recebidos', recebidos, carregandoRecebidos),
               ],
             ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -255,33 +259,37 @@ class _AmigosPageState extends State<AmigosPage> with TickerProviderStateMixin {
     );
   }
 
-  Widget _buildAmigosCard(String title, List<Amigo> lista) {
+  Widget _buildAmigosCard(String title, List<Amigo> lista, bool isLoading) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
       child: _buildCard(
         title: '📖 $title',
-        child: lista.isEmpty
-            ? const Text('Nenhum amigo adicionado.')
-            : Column(
-                children: lista
-                    .map((item) => ListTile(
-                          contentPadding: EdgeInsets.zero,
-                          leading: const CircleAvatar(
-                            backgroundColor: Color(0xFFDAB0E8),
-                            child: Icon(Icons.favorite, color: Colors.white),
-                          ),
-                          title: Text(
-                            item.amigo.nome,
-                            style: const TextStyle(fontWeight: FontWeight.w500),
-                          ),
-                          trailing: IconButton(
-                            icon: const Icon(Icons.delete_outline,
-                                color: Colors.redAccent),
-                            onPressed: () => excluirAmizade(item.amizadeId),
-                          ),
-                        ))
-                    .toList(),
-              ),
+        child: isLoading
+            ? const Center(child: CircularProgressIndicator())
+            : (lista.isEmpty
+                ? const SizedBox() // mostra vazio enquanto não há amigos
+                : Column(
+                    children: lista
+                        .map((item) => ListTile(
+                              contentPadding: EdgeInsets.zero,
+                              leading: const CircleAvatar(
+                                backgroundColor: Color(0xFFDAB0E8),
+                                child:
+                                    Icon(Icons.favorite, color: Colors.white),
+                              ),
+                              title: Text(
+                                item.amigo.nome,
+                                style: const TextStyle(
+                                    fontWeight: FontWeight.w500),
+                              ),
+                              trailing: IconButton(
+                                icon: const Icon(Icons.delete_outline,
+                                    color: Colors.redAccent),
+                                onPressed: () => excluirAmizade(item.amizadeId),
+                              ),
+                            ))
+                        .toList(),
+                  )),
       ),
     );
   }
