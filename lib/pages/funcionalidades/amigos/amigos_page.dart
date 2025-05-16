@@ -16,6 +16,7 @@ class AmigosPage extends StatefulWidget {
 class _AmigosPageState extends State<AmigosPage> with TickerProviderStateMixin {
   List<Amigo> amigos = [];
   List<Amigo> pendentes = [];
+  List<Amigo> recebidos = [];
 
   bool carregando = true;
   bool _isLoading = false;
@@ -32,16 +33,18 @@ class _AmigosPageState extends State<AmigosPage> with TickerProviderStateMixin {
   }
 
   @override
-void dispose() {
-  _tabController.dispose();
-  super.dispose();
-}
+  void dispose() {
+    _tabController.dispose();
+    super.dispose();
+  }
 
   void _handleTabChange() {
-    if (_tabController.indexIsChanging) return; // Evita chamadas múltiplas
+    if (_tabController.indexIsChanging) return;
 
     if (_tabController.index == 1 && pendentes.isEmpty) {
       carregarPendentes();
+    } else if (_tabController.index == 2 && recebidos.isEmpty) {
+      carregarRecebidos();
     }
   }
 
@@ -65,6 +68,21 @@ void dispose() {
       final pendentes = await AmizadeService().listarPendentes();
       setState(() {
         this.pendentes = pendentes;
+      });
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Erro ao carregar amigos.')),
+      );
+    } finally {
+      setState(() => carregando = false);
+    }
+  }
+
+  Future<void> carregarRecebidos() async {
+    try {
+      final recebidos = await AmizadeService().listarRecebidos();
+      setState(() {
+        this.recebidos = recebidos;
       });
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -178,7 +196,7 @@ void dispose() {
                     children: [
                       _buildAmigosCard('Aceitos', amigos),
                       _buildAmigosCard('Pendentes', pendentes),
-                      _buildAmigosCard('Recebidos', []),
+                      _buildAmigosCard('Recebidos', recebidos),
                     ],
                   ),
                 ),

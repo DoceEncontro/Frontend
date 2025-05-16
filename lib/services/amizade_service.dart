@@ -63,6 +63,31 @@ class AmizadeService {
     }
   }
 
+  Future<List<Amigo>> listarRecebidos() async {
+    try {
+      final url = Uri.parse('$baseUrl/recebidos');
+      final token = await TokenService.obterToken();
+
+      final response = await http.get(
+        url,
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final List<dynamic> dados = jsonDecode(response.body);
+        return dados.map((item) => Amigo.fromJson(item)).toList();
+      } else {
+        throw Exception('Erro ao listar recebidos');
+      }
+    } catch (e) {
+      print('Erro em listar recebidos: $e');
+      rethrow;
+    }
+  }
+
   Future<List<Usuario>> listarAceitos() async {
     final url = Uri.parse(baseUrl);
     final token = await TokenService.obterToken();
@@ -99,7 +124,7 @@ class AmizadeService {
       final List<dynamic> dados = jsonDecode(response.body);
       return dados.map((item) => Amigo.fromJson(item)).toList();
     } else {
-      throw Exception('Erro ao buscar convidados');
+      throw Exception('Erro ao buscar amizades');
     }
   }
 }
