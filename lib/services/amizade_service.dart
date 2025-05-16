@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:festora/models/amigo_model.dart';
 import 'package:festora/models/usuario_response_model.dart';
 import 'package:http/http.dart' as http;
 import 'package:festora/services/token_service.dart';
@@ -69,6 +70,26 @@ class AmizadeService {
     if (response.statusCode == 200) {
       final List<dynamic> dados = jsonDecode(response.body);
       return dados.map((item) => Usuario.fromJson(item['amigo'])).toList();
+    } else {
+      throw Exception('Erro ao buscar convidados');
+    }
+  }
+
+    Future<List<Amigo>> listarAmigosAceitos() async {
+    final url = Uri.parse(baseUrl);
+    final token = await TokenService.obterToken();
+
+    final response = await http.get(
+      url,
+      headers: {
+        'Authorization': 'Bearer $token',
+        'Content-Type': 'application/json',
+      },
+    );
+
+    if (response.statusCode == 200) {
+      final List<dynamic> dados = jsonDecode(response.body);
+      return dados.map((item) => Amigo.fromJson(item)).toList();
     } else {
       throw Exception('Erro ao buscar convidados');
     }
