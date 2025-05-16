@@ -27,7 +27,7 @@ class _ConvitesPageState extends State<ConvitesPage> {
       final pendentesLista = await AmizadeService().listarPendentes();
       setState(() {
         convites = convitesRecebidos;
-        pendentes = pendentesLista;
+        // pendentes = pendentesLista;
         carregando = false;
       });
     } catch (_) {

@@ -13,33 +13,64 @@ class AmigosPage extends StatefulWidget {
   State<AmigosPage> createState() => _AmigosPageState();
 }
 
-class _AmigosPageState extends State<AmigosPage> {
+class _AmigosPageState extends State<AmigosPage> with TickerProviderStateMixin {
   List<Amigo> amigos = [];
+  List<Amigo> pendentes = [];
+
   bool carregando = true;
-  final TextEditingController _emailController = TextEditingController();
   bool _isLoading = false;
+
+  final TextEditingController _emailController = TextEditingController();
+  late TabController _tabController;
 
   @override
   void initState() {
     super.initState();
+    _tabController = TabController(length: 3, vsync: this);
+    _tabController.addListener(_handleTabChange);
     carregarAmizades();
   }
 
+  @override
+void dispose() {
+  _tabController.dispose();
+  super.dispose();
+}
+
+  void _handleTabChange() {
+    if (_tabController.indexIsChanging) return; // Evita chamadas múltiplas
+
+    if (_tabController.index == 1 && pendentes.isEmpty) {
+      carregarPendentes();
+    }
+  }
+
   Future<void> carregarAmizades() async {
-    print('Iniciando carregarAmizades...');
     try {
       final aceitos = await AmizadeService().listarAmigosAceitos();
-      print('Resposta recebida: $amigos');
       setState(() {
         amigos = aceitos;
       });
     } catch (e) {
-      print('Erro ao carregar amizades: $e');
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Erro ao carregar amigos.')),
       );
     } finally {
-      print('Finalizando carregamento...');
+      setState(() => carregando = false);
+    }
+  }
+
+  Future<void> carregarPendentes() async {
+    try {
+      final pendentes = await AmizadeService().listarPendentes();
+      setState(() {
+        this.pendentes = pendentes;
+      });
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Erro ao carregar amigos.')),
+      );
+    } finally {
       setState(() => carregando = false);
     }
   }
@@ -67,93 +98,92 @@ class _AmigosPageState extends State<AmigosPage> {
 
   @override
   Widget build(BuildContext context) {
-    return DefaultTabController(
-      length: 3,
-      child: Scaffold(
-        backgroundColor: const Color(0xFFFCEFF9),
-        appBar: AppBar(
-          title: const Text('Amigos'),
-          backgroundColor: const Color(0xFFDAB0E8),
-          foregroundColor: Colors.white,
-          centerTitle: true,
-          elevation: 2,
-          leading: IconButton(
-            icon: const Icon(Icons.arrow_back),
-            onPressed: () => context.goNamed(HomeSectionPage.name),
-          ),
-          actions: [
-            IconButton(
-              icon: const Icon(Icons.mail_outline),
-              onPressed: () {
-                context.pushNamed('convites');
-              },
-            )
-          ],
-          bottom: const TabBar(
-            indicatorColor: Colors.white,
-            labelColor: Colors.white,
-            unselectedLabelColor: Colors.white70,
-            tabs: [
-              Tab(text: 'Aceitos'),
-              Tab(text: 'Pendentes'),
-              Tab(text: 'Recebidos'),
-            ],
-          ),
+    return Scaffold(
+      backgroundColor: const Color(0xFFFCEFF9),
+      appBar: AppBar(
+        title: const Text('Amigos'),
+        backgroundColor: const Color(0xFFDAB0E8),
+        foregroundColor: Colors.white,
+        centerTitle: true,
+        elevation: 2,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () => context.goNamed(HomeSectionPage.name),
         ),
-        body: carregando
-            ? const Center(child: CircularProgressIndicator())
-            : Column(
-                children: [
-                  Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: _buildCard(
-                      title: 'Adicionar Amigo 💌',
-                      child: Column(
-                        children: [
-                          TextField(
-                            controller: _emailController,
-                            decoration: InputDecoration(
-                              labelText: 'E-mail do Amigo',
-                              filled: true,
-                              fillColor: Colors.white,
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                            ),
-                          ),
-                          const SizedBox(height: 12),
-                          ElevatedButton.icon(
-                            onPressed: _isLoading ? null : _enviarSolicitacao,
-                            icon: const Icon(Icons.person_add_alt_1),
-                            label: const Text('Enviar Solicitação'),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: const Color(0xFFE8A8E3),
-                              foregroundColor: Colors.white,
-                              padding: const EdgeInsets.symmetric(
-                                  vertical: 14, horizontal: 24),
-                              textStyle: const TextStyle(
-                                  fontWeight: FontWeight.bold),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(20),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                  Expanded(
-                    child: TabBarView(
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.mail_outline),
+            onPressed: () {
+              context.pushNamed('convites');
+            },
+          )
+        ],
+        bottom: TabBar(
+          controller: _tabController,
+          indicatorColor: Colors.white,
+          labelColor: Colors.white,
+          unselectedLabelColor: Colors.white70,
+          tabs: const [
+            Tab(text: 'Aceitos'),
+            Tab(text: 'Pendentes'),
+            Tab(text: 'Recebidos'),
+          ],
+        ),
+      ),
+      body: carregando
+          ? const Center(child: CircularProgressIndicator())
+          : Column(
+              children: [
+                Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: _buildCard(
+                    title: 'Adicionar Amigo 💌',
+                    child: Column(
                       children: [
-                        _buildAmigosCard('Aceitos', amigos),
-                        _buildAmigosCard('Pendentes', []), // Exemplo
-                        _buildAmigosCard('Recebidos', []), // Exemplo
+                        TextField(
+                          controller: _emailController,
+                          decoration: InputDecoration(
+                            labelText: 'E-mail do Amigo',
+                            filled: true,
+                            fillColor: Colors.white,
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        ElevatedButton.icon(
+                          onPressed: _isLoading ? null : _enviarSolicitacao,
+                          icon: const Icon(Icons.person_add_alt_1),
+                          label: const Text('Enviar Solicitação'),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFFE8A8E3),
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(
+                                vertical: 14, horizontal: 24),
+                            textStyle:
+                                const TextStyle(fontWeight: FontWeight.bold),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                          ),
+                        ),
                       ],
                     ),
                   ),
-                ],
-              ),
-      ),
+                ),
+                Expanded(
+                  child: TabBarView(
+                    controller: _tabController,
+                    children: [
+                      _buildAmigosCard('Aceitos', amigos),
+                      _buildAmigosCard('Pendentes', pendentes),
+                      _buildAmigosCard('Recebidos', []),
+                    ],
+                  ),
+                ),
+              ],
+            ),
     );
   }
 
@@ -187,7 +217,7 @@ class _AmigosPageState extends State<AmigosPage> {
     );
   }
 
-   Widget _buildAmigosCard(String title, List<Amigo> lista) {
+  Widget _buildAmigosCard(String title, List<Amigo> lista) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
       child: _buildCard(
@@ -204,8 +234,7 @@ class _AmigosPageState extends State<AmigosPage> {
                           ),
                           title: Text(
                             item.amigo.nome,
-                            style: const TextStyle(
-                                fontWeight: FontWeight.w500),
+                            style: const TextStyle(fontWeight: FontWeight.w500),
                           ),
                           trailing: const Icon(Icons.cake_outlined,
                               color: Colors.pinkAccent),

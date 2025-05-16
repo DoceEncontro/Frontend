@@ -38,14 +38,22 @@ class AmizadeService {
     }
   }
 
-  Future<List<Map<String, dynamic>>> listarPendentes() async {
+  Future<List<Amigo>> listarPendentes() async {
     try {
-      final response = await http
-          .get(Uri.parse('$baseUrl/pendentes'))
-          .timeout(const Duration(seconds: 10));
+      final url = Uri.parse('$baseUrl/pendentes');
+      final token = await TokenService.obterToken();
+
+      final response = await http.get(
+        url,
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        },
+      );
 
       if (response.statusCode == 200) {
-        return List<Map<String, dynamic>>.from(jsonDecode(response.body));
+        final List<dynamic> dados = jsonDecode(response.body);
+        return dados.map((item) => Amigo.fromJson(item)).toList();
       } else {
         throw Exception('Erro ao listar pendentes');
       }
@@ -75,7 +83,7 @@ class AmizadeService {
     }
   }
 
-    Future<List<Amigo>> listarAmigosAceitos() async {
+  Future<List<Amigo>> listarAmigosAceitos() async {
     final url = Uri.parse(baseUrl);
     final token = await TokenService.obterToken();
 
