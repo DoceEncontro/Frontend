@@ -21,8 +21,6 @@ class HomeSectionPage extends StatefulWidget {
   State<HomeSectionPage> createState() => _HomeSectionPageState();
 }
 
-bool isCarregado = false;
-
 class _HomeSectionPageState extends State<HomeSectionPage> {
   int _currentIndex = 0;
   final PageController _pageController = PageController();
@@ -57,7 +55,7 @@ class _HomeSectionPageState extends State<HomeSectionPage> {
   Future<void> _carregarDados() async {
     setState(() => _carregando = true);
 
-    if (!isCarregado) {
+    if (!UsuarioController().isCarregado) {
       final eventos = await EventoService().listarEventosAtivos();
       final usuario = await UsuarioService().obterUsuario();
 
@@ -65,8 +63,8 @@ class _HomeSectionPageState extends State<HomeSectionPage> {
       Provider.of<UsuarioController>(context, listen: false)
           .setUsuario(usuario);
 
-      isCarregado = true;
     }
+
     setState(() => _carregando = false);
   }
 

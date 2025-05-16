@@ -6,13 +6,20 @@ class UsuarioController extends ChangeNotifier {
 
   UsuarioDetailsModel? get usuario => _usuario;
 
+  bool isCarregado = false;
+
   void setUsuario(UsuarioDetailsModel usuario) {
     _usuario = usuario;
+
+    isCarregado = true;
+
     notifyListeners();
   }
 
   void limparUser() {
     _usuario = null;
+
+    isCarregado = false;
 
     notifyListeners();
   }
