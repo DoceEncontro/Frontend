@@ -1,5 +1,7 @@
+import 'package:festora/pages/funcionalidades/amigos/convites/convite_page.dart';
 import 'package:flutter/material.dart';
 import 'package:festora/services/token_service.dart';
+import 'package:go_router/go_router.dart';
 
 class GradientAppBar extends StatelessWidget implements PreferredSizeWidget {
   final String user;
@@ -12,8 +14,8 @@ class GradientAppBar extends StatelessWidget implements PreferredSizeWidget {
   @override
   Widget build(BuildContext context) {
     return SafeArea(
-      // 👈 Adiciona margem superior segura
       child: Container(
+        height: preferredSize.height,
         decoration: const BoxDecoration(
           color: Color(0xFFF3F3F3),
           boxShadow: [
@@ -25,16 +27,16 @@ class GradientAppBar extends StatelessWidget implements PreferredSizeWidget {
             ),
           ],
         ),
-        child: Stack(
-          children: [
-            // Saudação e data
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
-              child: Align(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 20),
+          child: Stack(
+            children: [
+              // Saudação e data (à esquerda)
+              Align(
                 alignment: Alignment.centerLeft,
                 child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
                       'Olá, $user!',
@@ -55,49 +57,59 @@ class GradientAppBar extends StatelessWidget implements PreferredSizeWidget {
                   ],
                 ),
               ),
-            ),
 
-            // Notificações
-            Positioned(
-              top: 12,
-              right: 56,
-              child: IconButton(
-                icon: const Icon(Icons.notifications,
-                    color: Colors.amber, size: 26),
-                onPressed: () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Abrir notificações')),
-                  );
-                },
-              ),
-            ),
-
-            // Configurações
-            Positioned(
-              top: 10,
-              right: 10,
-              child: PopupMenuButton<String>(
-                icon: const Icon(Icons.settings, color: Colors.black, size: 28),
-                onSelected: (String result) {
-                  if (result == 'config') {
-                    // ação futura
-                  } else if (result == 'logout') {
-                    TokenService.logout(context);
-                  }
-                },
-                itemBuilder: (BuildContext context) => const [
-                  PopupMenuItem<String>(
-                    value: 'config',
-                    child: Text('Configurações'),
+              // Ícones (à direita, no topo)
+              Align(
+                alignment: Alignment.topRight,
+                child: Padding(
+                  padding: const EdgeInsets.only(top: 8),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      IconButton(
+                        icon: const Icon(Icons.mail,
+                            color: Colors.amber, size: 26),
+                        onPressed: () {
+                          GoRouter.of(context)
+                              .pushNamed(ConvitesPage.routeName);
+                        },
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.notifications,
+                            color: Colors.amber, size: 26),
+                        onPressed: () {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text('Abrir notificações')),
+                          );
+                        },
+                      ),
+                      PopupMenuButton<String>(
+                        icon: const Icon(Icons.settings,
+                            color: Colors.black, size: 28),
+                        onSelected: (String result) {
+                          if (result == 'config') {
+                            // ação futura
+                          } else if (result == 'logout') {
+                            TokenService.logout(context);
+                          }
+                        },
+                        itemBuilder: (BuildContext context) => const [
+                          PopupMenuItem<String>(
+                            value: 'config',
+                            child: Text('Configurações'),
+                          ),
+                          PopupMenuItem<String>(
+                            value: 'logout',
+                            child: Text('Sair'),
+                          ),
+                        ],
+                      ),
+                    ],
                   ),
-                  PopupMenuItem<String>(
-                    value: 'logout',
-                    child: Text('Sair'),
-                  ),
-                ],
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

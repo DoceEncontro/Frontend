@@ -53,7 +53,8 @@ class HomePageState extends State<HomePage> {
     try {
       await EventoService().desativarEvento(eventoId);
 
-      Provider.of<EventoController>(context, listen: false).excluirEventoPorId(eventoId);
+      Provider.of<EventoController>(context, listen: false)
+          .excluirEventoPorId(eventoId);
     } catch (e) {}
   }
 
@@ -76,165 +77,172 @@ class HomePageState extends State<HomePage> {
     {"icon": Icons.add, "label": "Criar Evento"},
     {"icon": Icons.calendar_today, "label": "Agenda"},
     {"icon": Icons.group, "label": "Amigos"},
+    {"icon": Icons.mail, "label": "Convites"},
   ];
 
   @override
-Widget build(BuildContext context) {
-  final chas = Provider.of<EventoController>(context).eventos;
-  final usuario = Provider.of<UsuarioController>(context).usuario;
-  
-  return GestureDetector(
-    onTap: () => FocusScope.of(context).unfocus(),
-    child: Scaffold(
-      backgroundColor: const Color(0xFFF3F3F3),
-      appBar: GradientAppBar(usuario!.nome),
-      body: RefreshIndicator(
-        onRefresh: _carregarDados,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 16),
-          child: Column(
-            children: [
-              if (chas.isNotEmpty)
-                SizedBox(
-                  height: 150,
-                  child: ListView.builder(
-                    scrollDirection: Axis.horizontal,
-                    itemCount: chas.length,
-                    itemBuilder: (context, index) {
-                      final evento = chas[index];
-                      return Padding(
-                        padding: const EdgeInsets.only(right: 12),
-                        child: SizedBox(
-                          width: 250,
-                          child: AnimatedGradientBorderContainer(
-                            child: Material(
-                              color: Colors.transparent,
-                              borderRadius: BorderRadius.circular(13),
-                              child: InkWell(
+  Widget build(BuildContext context) {
+    final chas = Provider.of<EventoController>(context).eventos;
+    final usuario = Provider.of<UsuarioController>(context).usuario;
+
+    return GestureDetector(
+      onTap: () => FocusScope.of(context).unfocus(),
+      child: Scaffold(
+        backgroundColor: const Color(0xFFF3F3F3),
+        appBar: GradientAppBar(usuario!.nome),
+        body: RefreshIndicator(
+          onRefresh: _carregarDados,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 16),
+            child: Column(
+              children: [
+                if (chas.isNotEmpty)
+                  SizedBox(
+                    height: 150,
+                    child: ListView.builder(
+                      scrollDirection: Axis.horizontal,
+                      itemCount: chas.length,
+                      itemBuilder: (context, index) {
+                        final evento = chas[index];
+                        return Padding(
+                          padding: const EdgeInsets.only(right: 12),
+                          child: SizedBox(
+                            width: 250,
+                            child: AnimatedGradientBorderContainer(
+                              child: Material(
+                                color: Colors.transparent,
                                 borderRadius: BorderRadius.circular(13),
-                                splashColor: Colors.transparent,
-                                highlightColor: const Color.fromARGB(255, 233, 245, 255),
-                                onTap: () {
-                                  RotaAnteriorUtils.setRota(context);
-                                  final eventoId = evento.id;
-                                  if (eventoId != null) {
-                                    Redirecionar().eventoDetails(context, eventoId);
-                                  }
-                                },
-                                onLongPress: () {
-                                  setState(() {});
-                                  _mostrarOpcoesEvento(context, evento);
-                                },
-                                onHighlightChanged: (isHighlighted) {},
-                                splashFactory: InkSplash.splashFactory,
-                                child: Ink(
-                                  decoration: BoxDecoration(
-                                    borderRadius: BorderRadius.circular(13),
-                                  ),
-                                  child: Padding(
-                                    padding: const EdgeInsets.all(16),
-                                    child: Column(
-                                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                      crossAxisAlignment: CrossAxisAlignment.start,
-                                      children: [
-                                        Column(
-                                          crossAxisAlignment: CrossAxisAlignment.start,
-                                          children: [
-                                            Text(
-                                              evento.titulo ?? '',
-                                              overflow: TextOverflow.ellipsis,
-                                              style: const TextStyle(
-                                                fontWeight: FontWeight.bold,
-                                                fontSize: 16,
-                                                color: Colors.black,
+                                child: InkWell(
+                                  borderRadius: BorderRadius.circular(13),
+                                  splashColor: Colors.transparent,
+                                  highlightColor:
+                                      const Color.fromARGB(255, 233, 245, 255),
+                                  onTap: () {
+                                    RotaAnteriorUtils.setRota(context);
+                                    final eventoId = evento.id;
+                                    if (eventoId != null) {
+                                      Redirecionar()
+                                          .eventoDetails(context, eventoId);
+                                    }
+                                  },
+                                  onLongPress: () {
+                                    setState(() {});
+                                    _mostrarOpcoesEvento(context, evento);
+                                  },
+                                  onHighlightChanged: (isHighlighted) {},
+                                  splashFactory: InkSplash.splashFactory,
+                                  child: Ink(
+                                    decoration: BoxDecoration(
+                                      borderRadius: BorderRadius.circular(13),
+                                    ),
+                                    child: Padding(
+                                      padding: const EdgeInsets.all(16),
+                                      child: Column(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.spaceBetween,
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Column(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
+                                            children: [
+                                              Text(
+                                                evento.titulo ?? '',
+                                                overflow: TextOverflow.ellipsis,
+                                                style: const TextStyle(
+                                                  fontWeight: FontWeight.bold,
+                                                  fontSize: 16,
+                                                  color: Colors.black,
+                                                ),
                                               ),
-                                            ),
-                                            const SizedBox(height: 6),
-                                            Text(
-                                              evento.descricao ?? '',
-                                              overflow: TextOverflow.ellipsis,
-                                              maxLines: 2,
-                                              style: const TextStyle(
-                                                fontSize: 12,
-                                                color: Colors.black54,
+                                              const SizedBox(height: 6),
+                                              Text(
+                                                evento.descricao ?? '',
+                                                overflow: TextOverflow.ellipsis,
+                                                maxLines: 2,
+                                                style: const TextStyle(
+                                                  fontSize: 12,
+                                                  color: Colors.black54,
+                                                ),
                                               ),
-                                            ),
-                                          ],
-                                        ),
-                                        Text(
-                                          _formatarData(evento.data),
-                                          style: const TextStyle(
-                                            fontSize: 12,
-                                            color: Colors.black54,
+                                            ],
                                           ),
-                                        ),
-                                      ],
+                                          Text(
+                                            _formatarData(evento.data),
+                                            style: const TextStyle(
+                                              fontSize: 12,
+                                              color: Colors.black54,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
                                     ),
                                   ),
                                 ),
                               ),
                             ),
                           ),
+                        );
+                      },
+                    ),
+                  ),
+                if (chas.isNotEmpty) const SizedBox(height: 20),
+                const Divider(thickness: 1, color: Colors.black45),
+                const SizedBox(height: 12),
+                Expanded(
+                  child: GridView.count(
+                    crossAxisCount: 3,
+                    mainAxisSpacing: 16,
+                    crossAxisSpacing: 16,
+                    childAspectRatio: 1,
+                    children: funcoes.map((item) {
+                      return GestureDetector(
+                        onTap: () {
+                          if (item['label'] == 'Criar Evento') {
+                            widget.onCreatePressed?.call();
+                          } else if (item['label'] == 'Agenda') {
+                            GoRouter.of(context).pushNamed('agenda');
+                          } else if (item['label'] == 'Amigos') {
+                            GoRouter.of(context).pushNamed('amigos');
+                          } else if (item['label'] == 'Convites') {
+                            GoRouter.of(context).pushNamed('convites');
+                          }
+                        },
+                        child: Container(
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            border: Border.all(color: Colors.black45),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(item['icon'], size: 30, color: Colors.black),
+                              const SizedBox(height: 8),
+                              Text(
+                                item['label'],
+                                textAlign: TextAlign.center,
+                                style: const TextStyle(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w500,
+                                  color: Colors.black,
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
                       );
-                    },
+                    }).toList(),
                   ),
                 ),
-              if (chas.isNotEmpty) const SizedBox(height: 20),
-              const Divider(thickness: 1, color: Colors.black45),
-              const SizedBox(height: 12),
-              Expanded(
-                child: GridView.count(
-                  crossAxisCount: 3,
-                  mainAxisSpacing: 16,
-                  crossAxisSpacing: 16,
-                  childAspectRatio: 1,
-                  children: funcoes.map((item) {
-                    return GestureDetector(
-                      onTap: () {
-                        if (item['label'] == 'Criar Evento') {
-                          widget.onCreatePressed?.call();
-                        } else if (item['label'] == 'Agenda') {
-                          GoRouter.of(context).pushNamed('agenda');
-                        } else if (item['label'] == 'Amigos') {
-                          GoRouter.of(context).pushNamed('amigos');
-                        }
-                      },
-                      child: Container(
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          border: Border.all(color: Colors.black45),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(item['icon'], size: 30, color: Colors.black),
-                            const SizedBox(height: 8),
-                            Text(
-                              item['label'],
-                              textAlign: TextAlign.center,
-                              style: const TextStyle(
-                                fontSize: 11,
-                                fontWeight: FontWeight.w500,
-                                color: Colors.black,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    );
-                  }).toList(),
-                ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
-    ),
-  );
-}
-
+    );
+  }
 
   String _formatarData(String? isoDate) {
     if (isoDate == null) return '';
