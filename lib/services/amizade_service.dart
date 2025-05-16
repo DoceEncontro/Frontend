@@ -37,6 +37,28 @@ class AmizadeService {
       rethrow;
     }
   }
+  
+  Future<void> excluirAmizade(String amizadeId) async {
+    try {
+     final url = Uri.parse('$baseUrl/$amizadeId');
+      final token = await TokenService.obterToken();
+
+      final response = await http.delete(
+        url,
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        },
+      );
+
+      if (response.statusCode != 200) {
+        throw Exception('Erro ao excluir amizade');
+      }
+    } catch (e) {
+      print('Erro em excluir amizade: $e');
+      rethrow;
+    }
+  }
 
   Future<List<Amigo>> listarPendentes() async {
     try {

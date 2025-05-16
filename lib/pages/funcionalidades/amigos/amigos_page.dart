@@ -114,6 +114,26 @@ class _AmigosPageState extends State<AmigosPage> with TickerProviderStateMixin {
     }
   }
 
+  void excluirAmizade(String amizadeId) async {
+    try {
+      await AmizadeService().excluirAmizade(amizadeId);
+
+      setState(() {
+        amigos.removeWhere((amigo) => amigo.amizadeId == amizadeId);
+        pendentes.removeWhere((amigo) => amigo.amizadeId == amizadeId);
+        recebidos.removeWhere((amigo) => amigo.amizadeId == amizadeId);
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Amizade excluída com sucesso')),
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Erro ao excluir amizade')),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -254,8 +274,11 @@ class _AmigosPageState extends State<AmigosPage> with TickerProviderStateMixin {
                             item.amigo.nome,
                             style: const TextStyle(fontWeight: FontWeight.w500),
                           ),
-                          trailing: const Icon(Icons.cake_outlined,
-                              color: Colors.pinkAccent),
+                          trailing: IconButton(
+                            icon: const Icon(Icons.delete_outline,
+                                color: Colors.redAccent),
+                            onPressed: () => excluirAmizade(item.amizadeId),
+                          ),
                         ))
                     .toList(),
               ),
