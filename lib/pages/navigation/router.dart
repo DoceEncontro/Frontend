@@ -133,24 +133,6 @@ abstract class AppRouter {
         builder: (context, state) => const AgendaPage(),
       ),
       GoRoute(
-        path: '/adicionar-amigo',
-        name: AdicionarAmigoPage.routeName,
-        builder: (context, state) => const AdicionarAmigoPage(),
-      ),
-      GoRoute(
-        path: '/convidar-amigos',
-        name: 'convidar-amigos',
-        builder: (context, state) {
-          final extra = state.extra;
-          if (extra is EventoDetails) {
-            return ConvidarAmigosPage(evento: extra);
-          } else {
-            return const Scaffold(
-                body: Center(child: Text('Evento não encontrado.')));
-          }
-        },
-      ),
-      GoRoute(
         path: '/amigos',
         name: AmigosPage.routeName,
         builder: (context, state) => const AmigosPage(),
