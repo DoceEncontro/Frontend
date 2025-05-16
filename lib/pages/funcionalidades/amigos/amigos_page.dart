@@ -1,3 +1,4 @@
+import 'package:festora/exceptions/api_error_exception.dart';
 import 'package:festora/models/amigo_model.dart';
 import 'package:festora/models/usuario_response_model.dart';
 import 'package:festora/pages/menu/home_section_page.dart';
@@ -107,14 +108,28 @@ class _AmigosPageState extends State<AmigosPage> with TickerProviderStateMixin {
     setState(() => _isLoading = true);
 
     try {
-      await AmizadeService().enviarSolicitacao(email);
+      final novoAmigo = await AmizadeService().enviarSolicitacao(email);
+
+      setState(() {
+        pendentes.add(novoAmigo);
+      });
+
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Solicitação enviada!')),
       );
       _emailController.clear();
-    } catch (_) {
+    } catch (e) {
+      print(e);
+      String mensagemErro;
+
+      if (e is ApiException) {
+        mensagemErro = e.error.message; // pega a mensagem do ApiError
+      } else {
+        mensagemErro = "Ocorreu um erro inesperado."; // transforma o erro genérico em string
+      }
+
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Erro ao enviar solicitação')),
+        SnackBar(content: Text(mensagemErro)),
       );
     } finally {
       setState(() => _isLoading = false);

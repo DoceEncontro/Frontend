@@ -10,4 +10,10 @@ class UsuarioController extends ChangeNotifier {
     _usuario = usuario;
     notifyListeners();
   }
+
+  void limparUser() {
+    _usuario = null;
+
+    notifyListeners();
+  }
 }
