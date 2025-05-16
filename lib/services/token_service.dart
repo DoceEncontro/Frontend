@@ -1,7 +1,9 @@
 import 'package:festora/config/api_config.dart';
+import 'package:festora/controllers/usuario_controller.dart';
 import 'package:festora/pages/login/login_page.dart';
 import 'package:festora/pages/login/register_page.dart';
 import 'package:festora/pages/menu/home_page.dart';
+import 'package:festora/services/usuario_service.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:http/http.dart' as http;
@@ -70,6 +72,9 @@ class TokenService {
   // Faz o logout completo
   static Future<void> logout(BuildContext context) async {
     await limparToken();
+
+    UsuarioController().limparUser();
+
     context.goNamed(LoginPage.name);
   }
 
