@@ -25,9 +25,16 @@ class AmizadeService {
 
   Future<void> aceitarSolicitacao(String amizadeId) async {
     try {
-      final response = await http
-          .put(Uri.parse('$baseUrl/$amizadeId'))
-          .timeout(const Duration(seconds: 10));
+      final url = Uri.parse('$baseUrl/$amizadeId');
+      final token = await TokenService.obterToken();
+
+      final response = await http.put(
+        url,
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        },
+      );
 
       if (response.statusCode != 200) {
         throw Exception('Erro ao aceitar pedido');

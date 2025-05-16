@@ -121,6 +121,29 @@ class _AmigosPageState extends State<AmigosPage> with TickerProviderStateMixin {
     }
   }
 
+  void aceitarAmizade(String amizadeId) async {
+    try {
+      await AmizadeService().aceitarSolicitacao(amizadeId);
+
+      setState(() {
+        // Remover dos recebidos
+        final index = recebidos.indexWhere((a) => a.amizadeId == amizadeId);
+        if (index != -1) {
+          final amigoAceito = recebidos.removeAt(index);
+          amigos.add(amigoAceito);
+        }
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Pedido aceito com sucesso')),
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Erro ao aceitar amizade')),
+      );
+    }
+  }
+
   void excluirAmizade(String amizadeId) async {
     try {
       await AmizadeService().excluirAmizade(amizadeId);
@@ -260,6 +283,21 @@ class _AmigosPageState extends State<AmigosPage> with TickerProviderStateMixin {
   }
 
   Widget _buildAmigosCard(String title, List<Amigo> lista, bool isLoading) {
+    String mensagemVazia;
+    switch (title) {
+      case 'Aceitos':
+        mensagemVazia = 'Você não tem amigos aceitos ainda.';
+        break;
+      case 'Pendentes':
+        mensagemVazia = 'Não há solicitações pendentes.';
+        break;
+      case 'Recebidos':
+        mensagemVazia = 'Nenhuma solicitação recebida.';
+        break;
+      default:
+        mensagemVazia = 'Nenhum item encontrado.';
+    }
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
       child: _buildCard(
@@ -267,28 +305,48 @@ class _AmigosPageState extends State<AmigosPage> with TickerProviderStateMixin {
         child: isLoading
             ? const Center(child: CircularProgressIndicator())
             : (lista.isEmpty
-                ? const SizedBox() // mostra vazio enquanto não há amigos
+                ? Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 24),
+                    child: Center(
+                      child: Text(
+                        mensagemVazia,
+                        style:
+                            const TextStyle(fontSize: 16, color: Colors.grey),
+                      ),
+                    ),
+                  )
                 : Column(
-                    children: lista
-                        .map((item) => ListTile(
-                              contentPadding: EdgeInsets.zero,
-                              leading: const CircleAvatar(
-                                backgroundColor: Color(0xFFDAB0E8),
-                                child:
-                                    Icon(Icons.favorite, color: Colors.white),
+                    children: lista.map((item) {
+                      final isRecebido = title == 'Recebidos';
+                      return ListTile(
+                        contentPadding: EdgeInsets.zero,
+                        leading: const CircleAvatar(
+                          backgroundColor: Color(0xFFDAB0E8),
+                          child: Icon(Icons.favorite, color: Colors.white),
+                        ),
+                        title: Text(
+                          item.amigo.nome,
+                          style: const TextStyle(fontWeight: FontWeight.w500),
+                        ),
+                        trailing: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            if (isRecebido)
+                              IconButton(
+                                icon: const Icon(Icons.check,
+                                    color: Colors.green),
+                                tooltip: 'Aceitar amizade',
+                                onPressed: () => aceitarAmizade(item.amizadeId),
                               ),
-                              title: Text(
-                                item.amigo.nome,
-                                style: const TextStyle(
-                                    fontWeight: FontWeight.w500),
-                              ),
-                              trailing: IconButton(
-                                icon: const Icon(Icons.delete_outline,
-                                    color: Colors.redAccent),
-                                onPressed: () => excluirAmizade(item.amizadeId),
-                              ),
-                            ))
-                        .toList(),
+                            IconButton(
+                              icon: const Icon(Icons.delete_outline,
+                                  color: Colors.redAccent),
+                              onPressed: () => excluirAmizade(item.amizadeId),
+                            ),
+                          ],
+                        ),
+                      );
+                    }).toList(),
                   )),
       ),
     );
