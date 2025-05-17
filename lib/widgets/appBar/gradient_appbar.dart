@@ -1,4 +1,4 @@
-import 'package:festora/models/notificacoes/notificacoes_page.dart';
+import 'package:festora/pages/notificacoes/notificacoes_page.dart';
 import 'package:festora/pages/funcionalidades/amigos/convites/convite_page.dart';
 import 'package:flutter/material.dart';
 import 'package:festora/services/token_service.dart';
