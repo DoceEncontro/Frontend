@@ -3,12 +3,14 @@ class NotificacaoModel {
   final String titulo;
   final String corpo;
   final String data;
+  final String icone;
 
   NotificacaoModel({
     required this.id,
     required this.titulo,
     required this.corpo,
     required this.data,
+    required this.icone,
   });
 
   factory NotificacaoModel.fromJson(Map<String, dynamic> json) {
@@ -17,6 +19,7 @@ class NotificacaoModel {
       titulo: json['titulo'],
       corpo: json['corpo'],
       data: json['data'],
+      icone: json['icone'],
     );
   }
 
@@ -26,6 +29,7 @@ class NotificacaoModel {
       'titulo': titulo,
       'corpo': corpo,
       'data': data,
+      'icone': icone,
     };
   }
 }
