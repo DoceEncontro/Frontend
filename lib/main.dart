@@ -1,3 +1,4 @@
+import 'package:festora/controllers/amigos_controller.dart';
 import 'package:festora/controllers/convidados_controller.dart';
 import 'package:festora/controllers/evento_controller.dart';
 import 'package:festora/controllers/participantes_controller.dart';
@@ -21,6 +22,7 @@ void main() async {
         ChangeNotifierProvider(create: (_) => PresenteController()),
         ChangeNotifierProvider(create: (_) => ParticipantesController()),
         ChangeNotifierProvider(create: (_) => ConvidadosController()),
+        ChangeNotifierProvider(create: (_) => AmigosController()),
       ],
       child: const MyApp(),
     ),

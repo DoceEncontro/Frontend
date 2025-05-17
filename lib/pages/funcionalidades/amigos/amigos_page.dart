@@ -1,3 +1,4 @@
+import 'package:festora/controllers/amigos_controller.dart';
 import 'package:festora/exceptions/api_error_exception.dart';
 import 'package:festora/models/amigo_model.dart';
 import 'package:festora/models/usuario_response_model.dart';
@@ -5,6 +6,7 @@ import 'package:festora/pages/menu/home_section_page.dart';
 import 'package:flutter/material.dart';
 import 'package:festora/services/amizade_service.dart';
 import 'package:go_router/go_router.dart';
+import 'package:provider/provider.dart';
 
 class AmigosPage extends StatefulWidget {
   const AmigosPage({super.key});
@@ -15,14 +17,13 @@ class AmigosPage extends StatefulWidget {
 }
 
 class _AmigosPageState extends State<AmigosPage> with TickerProviderStateMixin {
-  List<Amigo> amigos = [];
-  List<Amigo> pendentes = [];
-  List<Amigo> recebidos = [];
   bool _isLoading = false;
 
   bool carregandoAceitos = true;
   bool carregandoPendentes = false;
   bool carregandoRecebidos = false;
+
+  late final AmigosController amigosController;
 
   final TextEditingController _emailController = TextEditingController();
   late TabController _tabController;
@@ -32,6 +33,9 @@ class _AmigosPageState extends State<AmigosPage> with TickerProviderStateMixin {
     super.initState();
     _tabController = TabController(length: 3, vsync: this);
     _tabController.addListener(_handleTabChange);
+
+    amigosController = Provider.of<AmigosController>(context, listen: false);
+
     carregarAmizades();
   }
 
@@ -44,61 +48,58 @@ class _AmigosPageState extends State<AmigosPage> with TickerProviderStateMixin {
   void _handleTabChange() {
     if (_tabController.indexIsChanging) return;
 
-    if (_tabController.index == 1 && pendentes.isEmpty) {
+    if (_tabController.index == 1 && !Provider.of<AmigosController>(context, listen: false).pendCarregados) {
       carregarPendentes();
-    } else if (_tabController.index == 2 && recebidos.isEmpty) {
+    } else if (_tabController.index == 2 && !Provider.of<AmigosController>(context, listen: false).recebCarregados) {
       carregarRecebidos();
     }
   }
 
   Future<void> carregarAmizades() async {
     setState(() => carregandoAceitos = true);
-    try {
-      final aceitos = await AmizadeService().listarAmigosAceitos();
-      setState(() {
-        amigos = aceitos;
-      });
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Erro ao carregar amigos.')),
-      );
-    } finally {
-      setState(() {
-        carregandoAceitos = false;
-      });
+
+    if (!Provider.of<AmigosController>(context, listen: false).amgCarregados) {
+      try {
+        final aceitos = await AmizadeService().listarAmigosAceitos();
+
+        amigosController.setAmigos(aceitos);
+      } catch (e) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Erro ao carregar amigos.')),
+        );
+      }
     }
+    setState(() {
+      carregandoAceitos = false;
+    });
   }
 
   Future<void> carregarPendentes() async {
     setState(() => carregandoPendentes = true);
     try {
       final pendentes = await AmizadeService().listarPendentes();
-      setState(() {
-        this.pendentes = pendentes;
-      });
+
+      amigosController.setPendentes(pendentes);
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Erro ao carregar amigos.')),
       );
-    } finally {
-      setState(() => carregandoPendentes = false);
     }
+    setState(() => carregandoPendentes = false);
   }
 
   Future<void> carregarRecebidos() async {
     setState(() => carregandoRecebidos = true);
     try {
       final recebidos = await AmizadeService().listarRecebidos();
-      setState(() {
-        this.recebidos = recebidos;
-      });
+
+      amigosController.setRecebidos(recebidos);
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Erro ao carregar amigos.')),
       );
-    } finally {
-      setState(() => carregandoRecebidos = false);
     }
+    setState(() => carregandoRecebidos = false);
   }
 
   Future<void> _enviarSolicitacao() async {
@@ -110,9 +111,7 @@ class _AmigosPageState extends State<AmigosPage> with TickerProviderStateMixin {
     try {
       final novoAmigo = await AmizadeService().enviarSolicitacao(email);
 
-      setState(() {
-        pendentes.add(novoAmigo);
-      });
+      amigosController.enviarPedido(novoAmigo);
 
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Solicitação enviada!')),
@@ -125,7 +124,8 @@ class _AmigosPageState extends State<AmigosPage> with TickerProviderStateMixin {
       if (e is ApiException) {
         mensagemErro = e.error.message; // pega a mensagem do ApiError
       } else {
-        mensagemErro = "Ocorreu um erro inesperado."; // transforma o erro genérico em string
+        mensagemErro =
+            "Ocorreu um erro inesperado."; // transforma o erro genérico em string
       }
 
       ScaffoldMessenger.of(context).showSnackBar(
@@ -140,14 +140,7 @@ class _AmigosPageState extends State<AmigosPage> with TickerProviderStateMixin {
     try {
       await AmizadeService().aceitarSolicitacao(amizadeId);
 
-      setState(() {
-        // Remover dos recebidos
-        final index = recebidos.indexWhere((a) => a.amizadeId == amizadeId);
-        if (index != -1) {
-          final amigoAceito = recebidos.removeAt(index);
-          amigos.add(amigoAceito);
-        }
-      });
+      amigosController.aceitarAmigo(amizadeId);
 
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Pedido aceito com sucesso')),
@@ -163,11 +156,7 @@ class _AmigosPageState extends State<AmigosPage> with TickerProviderStateMixin {
     try {
       await AmizadeService().excluirAmizade(amizadeId);
 
-      setState(() {
-        amigos.removeWhere((amigo) => amigo.amizadeId == amizadeId);
-        pendentes.removeWhere((amigo) => amigo.amizadeId == amizadeId);
-        recebidos.removeWhere((amigo) => amigo.amizadeId == amizadeId);
-      });
+      amigosController.removerAmizade(amizadeId);
 
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Amizade excluída com sucesso')),
@@ -256,9 +245,18 @@ class _AmigosPageState extends State<AmigosPage> with TickerProviderStateMixin {
             child: TabBarView(
               controller: _tabController,
               children: [
-                _buildAmigosCard('Aceitos', amigos, carregandoAceitos),
-                _buildAmigosCard('Pendentes', pendentes, carregandoPendentes),
-                _buildAmigosCard('Recebidos', recebidos, carregandoRecebidos),
+                _buildAmigosCard(
+                    'Aceitos',
+                    Provider.of<AmigosController>(context).amigos,
+                    carregandoAceitos),
+                _buildAmigosCard(
+                    'Pendentes',
+                    Provider.of<AmigosController>(context).pendentes,
+                    carregandoPendentes),
+                _buildAmigosCard(
+                    'Recebidos',
+                    Provider.of<AmigosController>(context).recebidos,
+                    carregandoRecebidos),
               ],
             ),
           ),

@@ -1,4 +1,5 @@
 import 'package:festora/config/api_config.dart';
+import 'package:festora/controllers/amigos_controller.dart';
 import 'package:festora/controllers/usuario_controller.dart';
 import 'package:festora/pages/login/login_page.dart';
 import 'package:festora/pages/login/register_page.dart';
@@ -7,6 +8,7 @@ import 'package:festora/services/usuario_service.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:http/http.dart' as http;
+import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
@@ -43,6 +45,9 @@ class TokenService {
     if (response.statusCode == 200) {
       return true;
     } else if (response.statusCode != 200) {
+      UsuarioController().limparUser();
+      AmigosController().limparListas();
+
       final currentRoute = ModalRoute.of(context)?.settings.name;
 
       if (currentRoute != LoginPage.name &&
@@ -73,8 +78,8 @@ class TokenService {
   static Future<void> logout(BuildContext context) async {
     await limparToken();
 
-    UsuarioController().limparUser();
-
+    Provider.of<UsuarioController>(context, listen: false).limparUser();
+    Provider.of<AmigosController>(context, listen: false).limparListas();
     context.goNamed(LoginPage.name);
   }
 
