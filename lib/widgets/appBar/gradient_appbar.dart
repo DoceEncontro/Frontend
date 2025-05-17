@@ -1,3 +1,4 @@
+import 'package:festora/models/notificacoes/notificacoes_page.dart';
 import 'package:festora/pages/funcionalidades/amigos/convites/convite_page.dart';
 import 'package:flutter/material.dart';
 import 'package:festora/services/token_service.dart';
@@ -78,8 +79,12 @@ class GradientAppBar extends StatelessWidget implements PreferredSizeWidget {
                         icon: const Icon(Icons.notifications,
                             color: Colors.amber, size: 26),
                         onPressed: () {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('Abrir notificações')),
+                          showDialog(
+                            context: context,
+                            barrierColor:
+                                Colors.transparent, // clique fora fecha
+                            builder: (context) =>
+                                const NotificationBubbleDialog(),
                           );
                         },
                       ),
