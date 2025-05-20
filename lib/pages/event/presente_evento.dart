@@ -87,7 +87,7 @@ class _PresenteEventoPageState extends State<PresenteEventoPage> {
 
       if (response.$1) {
         presenteController.editarPresentePorId(response.$2);
-          
+
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Entrega cancelada com sucesso!')),
         );
@@ -366,59 +366,67 @@ class _PresenteEventoPageState extends State<PresenteEventoPage> {
                                 const SizedBox(width: 10),
                                 Row(
                                   children: [
-                                    if (_evento.isAutor) ...[
-                                      // Botão Editar
-                                      ElevatedButton(
-                                        onPressed: _carregando
-                                            ? null
-                                            : () {
-                                                // Aqui você pode abrir um modal para editar o presente
-                                                _abrirModalEditar(presente);
-                                              },
-                                        style: ElevatedButton.styleFrom(
-                                          backgroundColor: Colors.orangeAccent,
-                                        ),
-                                        child: const Text('Editar'),
-                                      ),
-                                      const SizedBox(width: 5),
-                                      // Botão Excluir
-                                      ElevatedButton(
-                                        onPressed: _carregando
-                                            ? null
-                                            : () {
-                                                _excluirPresente(presente.id);
-                                              },
-                                        child: const Text('Excluir'),
-                                      ),
-                                    ],
                                     const SizedBox(width: 5),
-                                    // Botão Entregar/Cancelar
-                                    ElevatedButton(
-                                      onPressed: _carregando
-                                          ? null
-                                          : () {
-                                              if (presente.isResponsavel) {
-                                                // Chama a função para cancelar a entrega
-                                                cancelarEntrega(presente.id);
-                                              } else {
-                                                // Chama a função para adicionar um responsável
-                                                _adicionarResponsavel(
-                                                    presente.id);
-                                              }
-                                            },
-                                      child: Text(presente.isResponsavel
-                                          ? 'Cancelar'
-                                          : 'Entregar'),
-                                    ),
-                                    const SizedBox(width: 5),
-                                    // Coloca um SizedBox com largura fixa para reservar espaço para o ícone
                                     SizedBox(
-                                      width:
-                                          24, // Largura do ícone de check (ajustável)
+                                      width: 24,
                                       child: presente.responsaveis.isNotEmpty
                                           ? const Icon(Icons.check_circle,
                                               color: Colors.pinkAccent)
                                           : null,
+                                    ),
+                                    PopupMenuButton<String>(
+                                      onSelected: (value) {
+                                        if (value == 'editar') {
+                                          _abrirModalEditar(presente);
+                                        } else if (value == 'excluir') {
+                                          _excluirPresente(presente.id);
+                                        } else if (value == 'entregar') {
+                                          _adicionarResponsavel(presente.id);
+                                        } else if (value == 'cancelar') {
+                                          cancelarEntrega(presente.id);
+                                        }
+                                      },
+                                      itemBuilder: (context) {
+                                        final List<PopupMenuEntry<String>>
+                                            items = [];
+
+                                        // Para todos, opção Entregar ou Cancelar
+                                        if (presente.isResponsavel) {
+                                          items.add(
+                                            const PopupMenuItem(
+                                              value: 'cancelar',
+                                              child: Text('Cancelar Entrega'),
+                                            ),
+                                          );
+                                        } else {
+                                          items.add(
+                                            const PopupMenuItem(
+                                              value: 'entregar',
+                                              child: Text('Entregar'),
+                                            ),
+                                          );
+                                        }
+
+                                        // Se for autor, adiciona Editar e Excluir
+                                        if (_evento.isAutor) {
+                                          items.add(const PopupMenuDivider());
+                                          items.add(
+                                            const PopupMenuItem(
+                                              value: 'editar',
+                                              child: Text('Editar'),
+                                            ),
+                                          );
+                                          items.add(
+                                            const PopupMenuItem(
+                                              value: 'excluir',
+                                              child: Text('Excluir'),
+                                            ),
+                                          );
+                                        }
+
+                                        return items;
+                                      },
+                                      icon: const Icon(Icons.more_vert),
                                     ),
                                   ],
                                 ),

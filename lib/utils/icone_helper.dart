@@ -21,6 +21,8 @@ class IconeHelper {
         return Icons.error;
       case 'calendar_today':
         return Icons.calendar_today;
+      case 'person_add':
+        return Icons.person_add_alt_1;
       default:
         return Icons.notifications; // ícone padrão
     }
