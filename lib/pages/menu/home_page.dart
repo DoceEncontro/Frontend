@@ -1,5 +1,6 @@
 import 'package:festora/controllers/evento_controller.dart';
 import 'package:festora/controllers/usuario_controller.dart';
+import 'package:festora/pages/funcionalidades/amigos/convites/convite_page.dart';
 import 'package:festora/utils/redirecionar_util.dart';
 import 'package:festora/utils/rota_anterior_utils.dart';
 import 'package:flutter/material.dart';
@@ -206,7 +207,10 @@ class HomePageState extends State<HomePage> {
                           } else if (item['label'] == 'Amigos') {
                             GoRouter.of(context).pushNamed('amigos');
                           } else if (item['label'] == 'Convites') {
-                            GoRouter.of(context).pushNamed('convites');
+                            showDialog(
+                              context: context,
+                              builder: (context) => const ConvitesModal(),
+                            );
                           }
                         },
                         child: Container(

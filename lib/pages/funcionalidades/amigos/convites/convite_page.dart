@@ -1,18 +1,16 @@
 import 'package:flutter/material.dart';
-import 'package:festora/services/amizade_service.dart';
+import 'package:festora/models/convite_model.dart';
 import 'package:festora/services/convite_service.dart';
 
-class ConvitesPage extends StatefulWidget {
-  const ConvitesPage({super.key});
-  static const String routeName = 'convites';
+class ConvitesModal extends StatefulWidget {
+  const ConvitesModal({super.key});
 
   @override
-  State<ConvitesPage> createState() => _ConvitesPageState();
+  State<ConvitesModal> createState() => _ConvitesModalState();
 }
 
-class _ConvitesPageState extends State<ConvitesPage> {
-  List<Map<String, dynamic>> convites = [];
-  List<Map<String, dynamic>> pendentes = [];
+class _ConvitesModalState extends State<ConvitesModal> {
+  List<ConviteModel> convites = [];
   bool carregando = true;
 
   @override
@@ -24,10 +22,8 @@ class _ConvitesPageState extends State<ConvitesPage> {
   Future<void> carregarConvites() async {
     try {
       final convitesRecebidos = await ConviteService().listarConvitesUsuario();
-      final pendentesLista = await AmizadeService().listarPendentes();
       setState(() {
         convites = convitesRecebidos;
-        // pendentes = pendentesLista;
         carregando = false;
       });
     } catch (_) {
@@ -35,117 +31,94 @@ class _ConvitesPageState extends State<ConvitesPage> {
     }
   }
 
-  Future<void> aceitar(String amizadeId) async {
-    try {
-      await AmizadeService().aceitarSolicitacao(amizadeId);
-      await carregarConvites();
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Amizade aceita!')),
-      );
-    } catch (_) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Erro ao aceitar amizade')),
-      );
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFFFCEFF9),
-      appBar: AppBar(
-        title: const Text('Convites e Pendentes'),
-        backgroundColor: const Color(0xFFDAB0E8),
-        foregroundColor: Colors.white,
-        centerTitle: true,
-      ),
-      body: carregando
-          ? const Center(child: CircularProgressIndicator())
-          : Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Expanded(
-                    child: ListView(
+    return Dialog(
+      insetPadding: const EdgeInsets.all(16),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      child: SizedBox(
+        width: double.infinity,
+        height: MediaQuery.of(context).size.height * 0.65,
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: carregando
+              ? const Center(child: CircularProgressIndicator())
+              : Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
                       children: [
-                        _buildCard(
-                          title: '📬 Convites Recebidos',
-                          child: convites.isEmpty
-                              ? const Text('Nenhum convite recebido.')
-                              : Column(
-                                  children: convites
-                                      .map((item) => ListTile(
-                                            contentPadding: EdgeInsets.zero,
-                                            leading: const CircleAvatar(
-                                              backgroundColor: Color(0xFFA3E4D7),
-                                              child: Icon(Icons.mail_outline, color: Colors.white),
-                                            ),
-                                            title: Text(item['titulo'] ?? 'Convite'),
-                                            subtitle: Text(item['descricao'] ?? ''),
-                                          ))
-                                      .toList(),
-                                ),
+                        const Text(
+                          '📬 Convites Recebidos',
+                          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                         ),
-                        const SizedBox(height: 20),
-                        _buildCard(
-                          title: '⏳ Solicitações de Amizade Pendentes',
-                          child: pendentes.isEmpty
-                              ? const Text('Nenhuma solicitação.')
-                              : Column(
-                                  children: pendentes
-                                      .map((item) => ListTile(
-                                            contentPadding: EdgeInsets.zero,
-                                            leading: const CircleAvatar(
-                                              backgroundColor: Color(0xFFFFC0CB),
-                                              child: Icon(Icons.person_outline, color: Colors.white),
-                                            ),
-                                            title: Text(item['amigo']['nome'] ?? 'Sem nome'),
-                                            trailing: ElevatedButton(
-                                              onPressed: () => aceitar(item['amizadeId']),
-                                              style: ElevatedButton.styleFrom(
-                                                backgroundColor: const Color(0xFFE1C2F7),
-                                                foregroundColor: Colors.black,
-                                              ),
-                                              child: const Text('Aceitar'),
-                                            ),
-                                          ))
-                                      .toList(),
-                                ),
+                        const Spacer(),
+                        IconButton(
+                          icon: const Icon(Icons.close),
+                          onPressed: () => Navigator.pop(context),
                         ),
                       ],
                     ),
-                  ),
-                ],
-              ),
-            ),
-    );
-  }
-
-  Widget _buildCard({required String title, required Widget child}) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: const [
-          BoxShadow(
-            color: Color(0x22000000),
-            blurRadius: 4,
-            offset: Offset(2, 2),
-          )
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            title,
-            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-          ),
-          const SizedBox(height: 12),
-          child,
-        ],
+                    const SizedBox(height: 12),
+                    Expanded(
+                      child: convites.isEmpty
+                          ? const Center(child: Text('Nenhum convite recebido.'))
+                          : ListView.builder(
+                              itemCount: convites.length,
+                              itemBuilder: (context, index) {
+                                final convite = convites[index];
+                                return Card(
+                                  elevation: 2,
+                                  margin: const EdgeInsets.symmetric(vertical: 8),
+                                  child: Padding(
+                                    padding: const EdgeInsets.all(12),
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          convite.titulo,
+                                          style: const TextStyle(
+                                            fontSize: 16,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                        const SizedBox(height: 8),
+                                        Text(convite.descricao),
+                                        const SizedBox(height: 12),
+                                        Row(
+                                          mainAxisAlignment: MainAxisAlignment.end,
+                                          children: [
+                                            TextButton(
+                                              onPressed: () {
+                                                // TODO: Aceitar convite
+                                              },
+                                              style: TextButton.styleFrom(
+                                                backgroundColor: const Color(0xFFA3E4D7),
+                                              ),
+                                              child: const Text('Aceitar', style: TextStyle(color: Colors.black)),
+                                            ),
+                                            const SizedBox(width: 8),
+                                            TextButton(
+                                              onPressed: () {
+                                                // TODO: Negar convite
+                                              },
+                                              style: TextButton.styleFrom(
+                                                backgroundColor: const Color(0xFFF5B7B1),
+                                              ),
+                                              child: const Text('Negar', style: TextStyle(color: Colors.black)),
+                                            ),
+                                          ],
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                );
+                              },
+                            ),
+                    ),
+                  ],
+                ),
+        ),
       ),
     );
   }

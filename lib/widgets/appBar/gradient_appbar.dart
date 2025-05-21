@@ -71,8 +71,10 @@ class GradientAppBar extends StatelessWidget implements PreferredSizeWidget {
                         icon: const Icon(Icons.mail,
                             color: Colors.amber, size: 26),
                         onPressed: () {
-                          GoRouter.of(context)
-                              .pushNamed(ConvitesPage.routeName);
+                          showDialog(
+                            context: context,
+                            builder: (context) => const ConvitesModal(),
+                          );
                         },
                       ),
                       IconButton(

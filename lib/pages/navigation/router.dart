@@ -138,11 +138,6 @@ abstract class AppRouter {
         builder: (context, state) => const AmigosPage(),
       ),
       GoRoute(
-        path: '/convites',
-        name: ConvitesPage.routeName,
-        builder: (context, state) => const ConvitesPage(),
-      ),
-      GoRoute(
         path: '/convite',
         name: ConviteLinkPage.routeName,
         builder: (context, state) => const ConviteLinkPage(),
