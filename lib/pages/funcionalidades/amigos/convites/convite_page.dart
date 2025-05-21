@@ -1,9 +1,10 @@
+import 'package:festora/controllers/convite_controller.dart';
 import 'package:festora/controllers/evento_controller.dart';
+import 'package:festora/models/convite_model.dart';
 import 'package:festora/models/evento_model.dart';
+import 'package:festora/services/convite_service.dart';
 import 'package:festora/services/evento_service.dart';
 import 'package:flutter/material.dart';
-import 'package:festora/models/convite_model.dart';
-import 'package:festora/services/convite_service.dart';
 import 'package:provider/provider.dart';
 
 class ConvitesModal extends StatefulWidget {
@@ -14,7 +15,6 @@ class ConvitesModal extends StatefulWidget {
 }
 
 class _ConvitesModalState extends State<ConvitesModal> {
-  List<ConviteModel> convites = [];
   bool carregando = true;
 
   @override
@@ -24,58 +24,69 @@ class _ConvitesModalState extends State<ConvitesModal> {
   }
 
   Future<void> carregarConvites() async {
-    try {
-      final convitesRecebidos = await ConviteService().listarConvitesUsuario();
-      setState(() {
-        convites = convitesRecebidos;
-        carregando = false;
-      });
-    } catch (_) {
-      setState(() => carregando = false);
+    final conviteController =
+        Provider.of<ConviteController>(context, listen: false);
+
+    if (!conviteController.isCarregado) {
+      try {
+        final convitesRecebidos =
+            await ConviteService().listarConvitesUsuario();
+        conviteController.setconvites(convitesRecebidos);
+      } catch (_) {
+        // Pode mostrar erro se quiser
+      }
     }
+
+    setState(() => carregando = false);
   }
 
-  Future<void> aceitarConvite(ConviteModel convite, int index) async {
+  Future<void> aceitarConvite(ConviteModel convite) async {
     final (sucesso, mensagem) =
         await EventoService().participar(convite.eventoId);
+
     if (context.mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(mensagem)),
       );
+
       if (sucesso) {
-        setState(() {
-          convites.removeAt(index);
-        });
         final eventoAceito =
             await EventoService().buscarEvento(convite.eventoId);
-            Provider.of<EventoController>(context, listen: false).adicionarEvento(EventoModel.fromDetails(eventoAceito.$2));
+        Provider.of<EventoController>(context, listen: false)
+            .adicionarEvento(EventoModel.fromDetails(eventoAceito.$2));
+
+        // Remove convite da lista do controller
+        Provider.of<ConviteController>(context, listen: false)
+            .removerConvitePorId(convite.id);
       }
     }
-
   }
-  Future<void> recusarConviteDoModal(String conviteId, int index) async {
-  try {
-    await ConviteService().recusarConvite(conviteId);
-    if (context.mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Convite recusado com sucesso.")),
-      );
-      setState(() {
-        convites.removeAt(index);
-      });
-    }
-  } catch (_) {
-    if (context.mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Erro ao recusar convite.")),
-      );
+
+  Future<void> recusarConviteDoModal(String conviteId) async {
+    try {
+      await ConviteService().recusarConvite(conviteId);
+
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Convite recusado com sucesso.")),
+        );
+
+        Provider.of<ConviteController>(context, listen: false)
+            .removerConvitePorId(conviteId);
+      }
+    } catch (_) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Erro ao recusar convite.")),
+        );
+      }
     }
   }
-}
-
 
   @override
   Widget build(BuildContext context) {
+    final conviteController = Provider.of<ConviteController>(context);
+
     return Dialog(
       insetPadding: const EdgeInsets.all(16),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
@@ -105,13 +116,14 @@ class _ConvitesModalState extends State<ConvitesModal> {
                     ),
                     const SizedBox(height: 12),
                     Expanded(
-                      child: convites.isEmpty
+                      child: conviteController.convites.isEmpty
                           ? const Center(
                               child: Text('Nenhum convite recebido.'))
                           : ListView.builder(
-                              itemCount: convites.length,
+                              itemCount: conviteController.convites.length,
                               itemBuilder: (context, index) {
-                                final convite = convites[index];
+                                final convite =
+                                    conviteController.convites[index];
                                 return Card(
                                   elevation: 2,
                                   margin:
@@ -138,7 +150,7 @@ class _ConvitesModalState extends State<ConvitesModal> {
                                           children: [
                                             TextButton(
                                               onPressed: () {
-                                                aceitarConvite(convite, index);
+                                                aceitarConvite(convite);
                                               },
                                               style: TextButton.styleFrom(
                                                 backgroundColor:
@@ -151,7 +163,8 @@ class _ConvitesModalState extends State<ConvitesModal> {
                                             const SizedBox(width: 8),
                                             TextButton(
                                               onPressed: () {
-                                                recusarConviteDoModal(convite.id, index);
+                                                recusarConviteDoModal(
+                                                    convite.id);
                                               },
                                               style: TextButton.styleFrom(
                                                 backgroundColor:
