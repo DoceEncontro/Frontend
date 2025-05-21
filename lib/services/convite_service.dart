@@ -63,4 +63,18 @@ class ConviteService {
       throw Exception("Erro ao listar notificações");
     }
   }
+
+  Future<void> recusarConvite(String conviteId) async {
+    final token = await TokenService.obterToken();
+
+    final response =
+        await http.delete(Uri.parse('$baseUrlUsuario/$conviteId'), headers: {
+      'Content-Type': 'application/json',
+      'Authorization': 'Bearer $token',
+    });
+
+    if (response.statusCode != 200 && response.statusCode != 201) {
+      throw Exception('Erro ao remover convites');
+    }
+  }
 }

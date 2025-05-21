@@ -5,7 +5,8 @@ import 'package:festora/services/token_service.dart';
 import 'package:http/http.dart' as http;
 
 class ConvidadoService {
-  final String baseUrl = '${ApiConfig.baseUrl}/eventos/convites'; // ajuste se necessário
+  final String baseUrl =
+      '${ApiConfig.baseUrl}/eventos/convites'; // ajuste se necessário
 
   Future<void> adicionarConvidado(String nome, String eventoId) async {
     final response = await http.post(
@@ -34,7 +35,9 @@ class ConvidadoService {
     );
 
     if (response.statusCode == 200) {
-      final List<dynamic> dados = jsonDecode(response.body);
+      final List<dynamic> dados = jsonDecode(
+        utf8.decode(response.bodyBytes),
+      );
       return dados.map((item) => Usuario.fromJson(item)).toList();
     } else {
       throw Exception('Erro ao buscar convidados');

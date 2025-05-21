@@ -22,7 +22,6 @@ class _AgendaPageState extends State<AgendaPage> {
 
   @override
   void initState() {
-    TokenService.limparToken();
     super.initState();
     _carregarEventos();
   }
