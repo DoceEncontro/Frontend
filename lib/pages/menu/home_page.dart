@@ -320,6 +320,7 @@ class HomePageState extends State<HomePage> {
                                 ElevatedButton(
                                   onPressed: () => {
                                     desativarEvento(evento.id!),
+
                                     Navigator.of(context).pop(true),
                                   },
                                   style: ElevatedButton.styleFrom(

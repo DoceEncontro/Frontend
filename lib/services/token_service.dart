@@ -1,6 +1,7 @@
 import 'package:festora/config/api_config.dart';
 import 'package:festora/controllers/amigos_controller.dart';
 import 'package:festora/controllers/convite_controller.dart';
+import 'package:festora/controllers/evento_controller.dart';
 import 'package:festora/controllers/notificacao_controller.dart';
 import 'package:festora/controllers/usuario_controller.dart';
 import 'package:festora/pages/login/login_page.dart';
@@ -84,7 +85,7 @@ class TokenService {
     Provider.of<AmigosController>(context, listen: false).limparListas();
     Provider.of<NotificacaoController>(context, listen: false)
         .limparNotificacoes();
-    Provider.of<ConviteController>(context, listen: false).limparConvites();
+    Provider.of<EventoController>(context, listen: false).limparEventos();
 
     context.goNamed(LoginPage.name);
   }

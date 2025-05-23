@@ -12,6 +12,8 @@ class EventoModel {
   final String rua;
   final int numero;
 
+  final bool? isAutor;
+
   EventoModel({
     this.id, // <<< Adicionado
     required this.titulo,
@@ -23,6 +25,7 @@ class EventoModel {
     required this.cidade,
     required this.rua,
     required this.numero,
+    this.isAutor,
   });
 
   Map<String, dynamic> toJson() {
@@ -54,6 +57,7 @@ class EventoModel {
       cidade: endereco['cidade'],
       rua: endereco['rua'],
       numero: endereco['numero'],
+      isAutor: json['autor']
     );
   }
 

@@ -123,6 +123,56 @@ class EventoService {
     }
   }
 
+  Future<List<EventoModel>> listarEventosPassados() async {
+    final token = await TokenHelper.getToken();
+    try {
+      final response = await http.get(
+        Uri.parse('$baseUrl/passados'),
+        headers: {
+          'Authorization': 'Bearer $token',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final List<dynamic> data = jsonDecode(
+          utf8.decode(response.bodyBytes),
+        );
+        return data.map((e) => EventoModel.fromJson(e)).toList();
+      } else {
+        print('Erro ao listar eventos: ${response.body}');
+        return [];
+      }
+    } catch (e) {
+      print('Erro na comunicação: $e');
+      return [];
+    }
+  }
+
+  Future<List<EventoModel>> listarEventosAutor() async {
+    final token = await TokenHelper.getToken();
+    try {
+      final response = await http.get(
+        Uri.parse('$baseUrl/autor'),
+        headers: {
+          'Authorization': 'Bearer $token',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final List<dynamic> data = jsonDecode(
+          utf8.decode(response.bodyBytes),
+        );
+        return data.map((e) => EventoModel.fromJson(e)).toList();
+      } else {
+        print('Erro ao listar eventos: ${response.body}');
+        return [];
+      }
+    } catch (e) {
+      print('Erro na comunicação: $e');
+      return [];
+    }
+  }
+
   Future<bool> desativarEvento(String id) async {
     final token = await TokenHelper.getToken();
     try {
