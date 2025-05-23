@@ -8,3 +8,9 @@ class ApiConfig {
       //   : 'http://192.168.15.75:8080'; // victor pc
       // : 'http://192.168.71.222:8080'; // victor notebook
 }
+
+class ApiConfigChatbot {
+  static final String baseUrl = kIsWeb
+      ? 'http://localhost:5005'
+      : dotenv.env['CHATBOT_URL'] ?? '';
+}

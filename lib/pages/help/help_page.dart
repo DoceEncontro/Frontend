@@ -1,3 +1,4 @@
+import 'package:festora/pages/funcionalidades/chatbot_modal.dart';
 import 'package:festora/pages/login/login_page.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
@@ -100,7 +101,15 @@ class _HelpPageState extends State<HelpPage> {
             const SizedBox(height: 20),
             ElevatedButton.icon(
               onPressed: () {
-                // TODO: Implementar abrir Chatbot
+                showModalBottomSheet(
+                  context: context,
+                  isScrollControlled: true,
+                  shape: const RoundedRectangleBorder(
+                    borderRadius:
+                        BorderRadius.vertical(top: Radius.circular(20)),
+                  ),
+                  builder: (context) => ChatbotScreen(),
+                );
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.purple.shade100,
