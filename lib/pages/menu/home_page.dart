@@ -127,8 +127,9 @@ class HomePageState extends State<HomePage> {
                                     }
                                   },
                                   onLongPress: () {
-                                    setState(() {});
-                                    _mostrarOpcoesEvento(context, evento);
+                                    if (evento.isAutor == true) {
+                                      _mostrarOpcoesEvento(context, evento);
+                                    }
                                   },
                                   onHighlightChanged: (isHighlighted) {},
                                   splashFactory: InkSplash.splashFactory,
@@ -148,14 +149,39 @@ class HomePageState extends State<HomePage> {
                                             crossAxisAlignment:
                                                 CrossAxisAlignment.start,
                                             children: [
-                                              Text(
-                                                evento.titulo ?? '',
-                                                overflow: TextOverflow.ellipsis,
-                                                style: const TextStyle(
-                                                  fontWeight: FontWeight.bold,
-                                                  fontSize: 16,
-                                                  color: Colors.black,
-                                                ),
+                                              Row(
+                                                children: [
+                                                  if (evento.isAutor == true)
+                                                    const Padding(
+                                                      padding: EdgeInsets.only(
+                                                          right: 6),
+                                                      child: Icon(
+                                                          Icons.verified,
+                                                          size: 20,
+                                                          color: Colors.pink),
+                                                    )
+                                                  else
+                                                    const Padding(
+                                                      padding: EdgeInsets.only(
+                                                          right: 6),
+                                                      child: Icon(Icons.event,
+                                                          size: 20,
+                                                          color: Colors.pink),
+                                                    ),
+                                                  Expanded(
+                                                    child: Text(
+                                                      evento.titulo ?? '',
+                                                      overflow:
+                                                          TextOverflow.ellipsis,
+                                                      style: const TextStyle(
+                                                        fontWeight:
+                                                            FontWeight.bold,
+                                                        fontSize: 16,
+                                                        color: Colors.black,
+                                                      ),
+                                                    ),
+                                                  ),
+                                                ],
                                               ),
                                               const SizedBox(height: 6),
                                               Text(
@@ -273,28 +299,29 @@ class HomePageState extends State<HomePage> {
               ListTile(
                 leading: const Icon(Icons.edit, color: Colors.blue),
                 title: const Text('Editar Evento'),
-                onTap: () {
+                onTap: () async {
                   Navigator.of(context).pop();
-                  Future.delayed(Duration.zero, () async {
-                    final ehAutor = await EventoService()
-                        .verificarSeUsuarioEhAutor(evento.id!);
-                    if (ehAutor) {
-                      final result = await context
-                          .pushNamed<String>('criar-evento', extra: evento);
-                      if (result == 'evento_editado') {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                              content: Text('Evento atualizado com sucesso!')),
-                        );
-                      }
-                    } else {
+
+                  if (evento.isAutor == true) {
+                    final result = await context.pushNamed<String>(
+                      'criar-evento',
+                      extra: evento,
+                    );
+                    if (result == 'evento_editado') {
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(
-                            content: Text(
-                                'Você não tem permissão para editar este evento.')),
+                          content: Text('Evento atualizado com sucesso!'),
+                        ),
                       );
                     }
-                  });
+                  } else {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text(
+                            'Você não tem permissão para editar este evento.'),
+                      ),
+                    );
+                  }
                 },
               ),
               ListTile(
@@ -303,57 +330,35 @@ class HomePageState extends State<HomePage> {
                 onTap: () async {
                   Navigator.of(context).pop();
 
-                  Future<bool> _confirmarExclusao(BuildContext context) async {
-                    return await showDialog<bool>(
-                          context: context,
-                          builder: (context) {
-                            return AlertDialog(
-                              title: const Text('Confirmar Exclusão'),
-                              content: const Text(
-                                  'Você tem certeza que deseja excluir este evento?'),
-                              actions: [
-                                TextButton(
-                                  onPressed: () =>
-                                      Navigator.of(context).pop(false),
-                                  child: const Text('Cancelar'),
-                                ),
-                                ElevatedButton(
-                                  onPressed: () => {
-                                    desativarEvento(evento.id!),
-
-                                    Navigator.of(context).pop(true),
-                                  },
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: Colors.red,
-                                  ),
-                                  child: const Text('Excluir'),
-                                ),
-                              ],
-                            );
-                          },
-                        ) ??
-                        false;
-                  }
-
-                  final ehAutor = await EventoService()
-                      .verificarSeUsuarioEhAutor(evento.id!);
-                  if (ehAutor) {
-                    bool confirmado = await _confirmarExclusao(context);
-                    if (confirmado) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Evento excluído com sucesso!'),
-                        ),
+                  final confirmacao = await showDialog<bool>(
+                    context: context,
+                    builder: (context) {
+                      return AlertDialog(
+                        title: const Text('Confirmar Exclusão'),
+                        content: const Text(
+                            'Você tem certeza que deseja excluir este evento?'),
+                        actions: [
+                          TextButton(
+                            onPressed: () => Navigator.of(context).pop(false),
+                            child: const Text('Cancelar'),
+                          ),
+                          ElevatedButton(
+                            onPressed: () {
+                              desativarEvento(evento.id!);
+                              Navigator.of(context).pop(true);
+                            },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.red,
+                            ),
+                            child: const Text('Excluir'),
+                          ),
+                        ],
                       );
-                    }
-                  } else {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text(
-                            'Você não tem permissão para excluir este evento.'),
-                      ),
-                    );
-                  }
+                    },
+                  );
+
+                  // Se o usuário não confirmou, não faz nada
+                  if (confirmacao != true) return;
                 },
               ),
             ],
