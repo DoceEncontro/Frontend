@@ -11,6 +11,7 @@ class EventoDetails {
   final bool ativo;
   final EnderecoModel endereco;
   final Usuario organizador;
+  final String chatId;
   final bool isAutor;
 
   EventoDetails({
@@ -23,6 +24,7 @@ class EventoDetails {
     required this.endereco,
     required this.organizador,
     required this.isAutor,
+    required this.chatId,
   });
 
   factory EventoDetails.fromJson(Map<String, dynamic> json) {
@@ -36,6 +38,7 @@ class EventoDetails {
       endereco: EnderecoModel.fromJson(json['endereco']),
       organizador: Usuario.fromJson(json['organizador']),
       isAutor: json['autor'],
+      chatId: json['chatId'],
     );
   }
 }

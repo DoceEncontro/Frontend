@@ -1,6 +1,7 @@
 import 'package:festora/models/evento_details_model.dart';
 import 'package:festora/models/evento_model.dart';
 import 'package:festora/pages/convite/convite.dart';
+import 'package:festora/pages/event/chat_evento.dart';
 import 'package:festora/pages/event/presente_evento.dart';
 import 'package:festora/pages/funcionalidades/amigos/adicionar_amigo_page.dart';
 import 'package:festora/pages/funcionalidades/amigos/amigos_page.dart';
@@ -117,6 +118,20 @@ abstract class AppRouter {
               final extra = state.extra;
               if (extra is EventoDetails) {
                 return PresenteEventoPage(evento: extra);
+              } else {
+                return const Scaffold(
+                  body: Center(child: Text('Evento inválido.')),
+                );
+              }
+            },
+          ),
+          GoRoute(
+            path: '/detalhes-evento/chat',
+            name: 'chat-evento',
+            builder: (context, state) {
+              final extra = state.extra;
+              if (extra is EventoDetails) {
+                return ChatEventoPage(evento: extra);
               } else {
                 return const Scaffold(
                   body: Center(child: Text('Evento inválido.')),

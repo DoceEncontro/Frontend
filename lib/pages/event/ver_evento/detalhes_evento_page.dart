@@ -8,6 +8,7 @@ import 'package:festora/models/evento_details_model.dart';
 import 'package:festora/models/evento_model.dart';
 import 'package:festora/models/usuario_details_model.dart';
 import 'package:festora/models/usuario_response_model.dart';
+import 'package:festora/pages/event/chat_evento.dart';
 import 'package:festora/pages/funcionalidades/participantes_page.dart';
 import 'package:festora/pages/menu/home_section_page.dart';
 import 'package:festora/services/usuario_service.dart';
@@ -382,7 +383,7 @@ class _DetalhesEventoPageState extends State<DetalhesEventoPage> {
               children: [
                 _buildIconTile(Icons.chat, 'Chat', iconColor: Colors.blue,
                     onTap: () {
-                  // TODO: implementar
+                      GoRouter.of(context).pushNamed(ChatEventoPage.name, extra: evento);
                 }),
                 _buildIconTile(Icons.list, 'Presentes',
                     iconColor: const Color.fromARGB(255, 0, 202, 252),
