@@ -48,26 +48,26 @@ class _ChatEventoPageState extends State<ChatEventoPage> {
     }
   }
 
-  void enviarMensagem() {
+  void enviarMensagem() async {
     final texto = _mensagemController.text.trim();
-    final usuarioLogado = Provider.of<UsuarioController>(context, listen: false).usuario;
+    final usuarioLogado =
+        Provider.of<UsuarioController>(context, listen: false).usuario;
 
     if (texto.isNotEmpty && usuarioLogado != null) {
-      setState(() {
-        mensagens.add(
-          Mensagem(
-            id: DateTime.now().millisecondsSinceEpoch.toString(),
-            conteudo: texto,
-            dataEnvio: 'agora',
-            usuario: Usuario.fromDetails(Provider.of<UsuarioController>(context, listen: false).usuario!),
-          ),
-        );
-      });
       _mensagemController.clear();
-      _scrollParaFim();
 
-      // Aqui você pode chamar sua API para enviar a mensagem de fato,
-      // e depois recarregar as mensagens (ou atualizar o estado conforme o retorno)
+      try {
+        final novaMensagem = await ChatService().enviarMensagem(texto, widget.evento.chatId);
+
+        setState(() {
+          mensagens.add(novaMensagem);
+        });
+
+        _scrollParaFim();
+      } catch (e) {
+        print('Erro ao enviar mensagem: $e');
+        // Aqui você pode mostrar um snackbar, alerta, etc.
+      }
     }
   }
 
@@ -85,7 +85,8 @@ class _ChatEventoPageState extends State<ChatEventoPage> {
 
   @override
   Widget build(BuildContext context) {
-    final usuarioLogado = Provider.of<UsuarioController>(context, listen: false).usuario;
+    final usuarioLogado =
+        Provider.of<UsuarioController>(context, listen: false).usuario;
     final primaryColor = Colors.pinkAccent;
 
     return Scaffold(
@@ -138,14 +139,16 @@ class _ChatEventoPageState extends State<ChatEventoPage> {
                                       msg.usuario.nome,
                                       style: TextStyle(
                                         fontWeight: FontWeight.bold,
-                                        color: souEu ? Colors.white : Colors.black,
+                                        color:
+                                            souEu ? Colors.white : Colors.black,
                                       ),
                                     ),
                                     const SizedBox(height: 4),
                                     Text(
                                       msg.conteudo,
                                       style: TextStyle(
-                                        color: souEu ? Colors.white : Colors.black,
+                                        color:
+                                            souEu ? Colors.white : Colors.black,
                                       ),
                                     ),
                                     const SizedBox(height: 6),

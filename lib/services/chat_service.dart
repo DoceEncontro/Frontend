@@ -23,4 +23,23 @@ class ChatService {
       throw Exception('Erro ao buscar mensagens');
     }
   }
+
+  Future<Mensagem> enviarMensagem(String mensagem, String chatId) async {
+    final token = await TokenHelper.getToken();
+    try {
+      final response = await http.post(
+        Uri.parse('$baseUrl/$chatId'),
+        headers: {
+          'Content-Type': 'text/plain',
+          'Authorization': 'Bearer $token',
+        },
+        body: mensagem,
+      );
+
+      final data = jsonDecode(utf8.decode(response.bodyBytes));
+      return Mensagem.fromJson(data);
+    } catch (e) {
+      throw Exception("Erro ao enviar mensagem");
+    }
+  }
 }
