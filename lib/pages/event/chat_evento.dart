@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:festora/controllers/mensagem_controller.dart';
 import 'package:festora/controllers/usuario_controller.dart';
 import 'package:festora/models/evento_details_model.dart';
 import 'package:festora/models/mensagem_model.dart';
@@ -24,13 +25,9 @@ class ChatEventoPage extends StatefulWidget {
 }
 
 class _ChatEventoPageState extends State<ChatEventoPage> {
-  StompClient? stompClient;
   final TextEditingController _mensagemController = TextEditingController();
   final ScrollController scrollController = ScrollController();
 
-  final backUrl = dotenv.env['BACK_URL'];
-
-  List<Mensagem> mensagens = [];
   bool carregando = true;
 
   final ChatService _chatService = ChatService();
@@ -39,55 +36,29 @@ class _ChatEventoPageState extends State<ChatEventoPage> {
   void initState() {
     super.initState();
     _carregarMensagens();
-
-    stompClient = StompClient(
-      config: StompConfig.SockJS(
-        url: '$backUrl/ws',
-        onConnect: _onConnect,
-        onWebSocketError: (error) => print('Erro no websocket: $error'),
-      ),
-    );
-
-    stompClient!.activate();
-  }
-
-  void _onConnect(StompFrame frame) {
-    stompClient!.subscribe(
-      destination: '/topic/chat/${widget.evento.chatId}',
-      callback: (StompFrame frame) {
-        if (frame.body != null) {
-          final json = jsonDecode(frame.body!);
-          final novaMsg = Mensagem.fromJson(json);
-          setState(() {
-            mensagens.add(novaMsg);
-          });
-          _scrollParaFim();
-        }
-      },
-    );
   }
 
   @override
   void dispose() {
-    stompClient?.deactivate();
     super.dispose();
   }
 
   Future<void> _carregarMensagens() async {
     setState(() => carregando = true);
-    try {
-      // Passar o id do chat, pode ser o id do evento por exemplo
-      final lista = await _chatService.obterMensagens(widget.evento.chatId);
-      setState(() {
-        mensagens = lista;
-        carregando = false;
-      });
-      _scrollParaFim();
-    } catch (e) {
-      setState(() => carregando = false);
-      // Aqui você pode mostrar um snackbar ou alerta
-      debugPrint('Erro ao carregar mensagens: $e');
+
+    if (!Provider.of<MensagemController>(context, listen: false).isCarregado) {
+      try {
+        final lista = await _chatService.obterMensagens(widget.evento.chatId);
+
+        Provider.of<MensagemController>(context, listen: false)
+            .setMensagens(lista, widget.evento.chatId);
+
+        _scrollParaFim();
+      } catch (e) {
+        debugPrint('Erro ao carregar mensagens: $e');
+      }
     }
+    setState(() => carregando = false);
   }
 
   void enviarMensagem() async {
@@ -124,6 +95,9 @@ class _ChatEventoPageState extends State<ChatEventoPage> {
   Widget build(BuildContext context) {
     final usuarioLogado =
         Provider.of<UsuarioController>(context, listen: false).usuario;
+    final mensagens =
+        Provider.of<MensagemController>(context).mensagens;
+
     final primaryColor = Colors.pinkAccent;
 
     return Scaffold(

@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:festora/controllers/convidados_controller.dart';
 import 'package:festora/controllers/evento_controller.dart';
+import 'package:festora/controllers/mensagem_controller.dart';
 import 'package:festora/controllers/participantes_controller.dart';
 import 'package:festora/controllers/presente_controller.dart';
 import 'package:festora/controllers/usuario_controller.dart';
@@ -40,6 +41,7 @@ class _DetalhesEventoPageState extends State<DetalhesEventoPage> {
   late final PresenteController _presenteController;
   late final ParticipantesController _participantesController;
   late final ConvidadosController _convidadosController;
+  late final MensagemController _mensagensController;
 
   @override
   void initState() {
@@ -53,8 +55,8 @@ class _DetalhesEventoPageState extends State<DetalhesEventoPage> {
   void dispose() {
     _presenteController.limparPresentes();
     _participantesController.limparParticipantes();
-
-        _convidadosController.limparListas();
+    _convidadosController.limparListas();
+    _mensagensController.limparMensagens();
 
     super.dispose();
   }
@@ -70,6 +72,9 @@ class _DetalhesEventoPageState extends State<DetalhesEventoPage> {
 
     _convidadosController =
         Provider.of<ConvidadosController>(context, listen: false);
+
+    _mensagensController =
+        Provider.of<MensagemController>(context, listen: false);
   }
 
   Future<void> carregarDados() async {
@@ -383,7 +388,8 @@ class _DetalhesEventoPageState extends State<DetalhesEventoPage> {
               children: [
                 _buildIconTile(Icons.chat, 'Chat', iconColor: Colors.blue,
                     onTap: () {
-                      GoRouter.of(context).pushNamed(ChatEventoPage.name, extra: evento);
+                  GoRouter.of(context)
+                      .pushNamed(ChatEventoPage.name, extra: evento);
                 }),
                 _buildIconTile(Icons.list, 'Presentes',
                     iconColor: const Color.fromARGB(255, 0, 202, 252),
