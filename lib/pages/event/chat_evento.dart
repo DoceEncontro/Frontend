@@ -1,10 +1,17 @@
+import 'dart:convert';
+
 import 'package:festora/controllers/usuario_controller.dart';
 import 'package:festora/models/evento_details_model.dart';
 import 'package:festora/models/mensagem_model.dart';
 import 'package:festora/models/usuario_response_model.dart';
 import 'package:festora/services/chat_service.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:provider/provider.dart';
+import 'package:stomp_dart_client/stomp.dart';
+import 'package:stomp_dart_client/stomp_config.dart';
+import 'package:stomp_dart_client/stomp_frame.dart';
+import 'package:web_socket_channel/web_socket_channel.dart';
 
 class ChatEventoPage extends StatefulWidget {
   static const String name = 'chat-evento';
@@ -17,8 +24,11 @@ class ChatEventoPage extends StatefulWidget {
 }
 
 class _ChatEventoPageState extends State<ChatEventoPage> {
+  StompClient? stompClient;
   final TextEditingController _mensagemController = TextEditingController();
   final ScrollController scrollController = ScrollController();
+
+  final backUrl = dotenv.env['BACK_URL'];
 
   List<Mensagem> mensagens = [];
   bool carregando = true;
@@ -29,6 +39,38 @@ class _ChatEventoPageState extends State<ChatEventoPage> {
   void initState() {
     super.initState();
     _carregarMensagens();
+
+    stompClient = StompClient(
+      config: StompConfig.SockJS(
+        url: '$backUrl/ws',
+        onConnect: _onConnect,
+        onWebSocketError: (error) => print('Erro no websocket: $error'),
+      ),
+    );
+
+    stompClient!.activate();
+  }
+
+  void _onConnect(StompFrame frame) {
+    stompClient!.subscribe(
+      destination: '/topic/chat/${widget.evento.chatId}',
+      callback: (StompFrame frame) {
+        if (frame.body != null) {
+          final json = jsonDecode(frame.body!);
+          final novaMsg = Mensagem.fromJson(json);
+          setState(() {
+            mensagens.add(novaMsg);
+          });
+          _scrollParaFim();
+        }
+      },
+    );
+  }
+
+  @override
+  void dispose() {
+    stompClient?.deactivate();
+    super.dispose();
   }
 
   Future<void> _carregarMensagens() async {
@@ -57,16 +99,11 @@ class _ChatEventoPageState extends State<ChatEventoPage> {
       _mensagemController.clear();
 
       try {
-        final novaMensagem = await ChatService().enviarMensagem(texto, widget.evento.chatId);
-
-        setState(() {
-          mensagens.add(novaMensagem);
-        });
+        await ChatService().enviarMensagem(texto, widget.evento.chatId);
 
         _scrollParaFim();
       } catch (e) {
         print('Erro ao enviar mensagem: $e');
-        // Aqui você pode mostrar um snackbar, alerta, etc.
       }
     }
   }
