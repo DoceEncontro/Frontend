@@ -1,6 +1,7 @@
 import 'package:festora/pages/help/help_page.dart';
 import 'package:festora/pages/menu/home_page.dart';
 import 'package:festora/pages/menu/home_section_page.dart';
+import 'package:festora/utils/rota_anterior_utils.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:go_router/go_router.dart';

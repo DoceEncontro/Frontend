@@ -1,5 +1,7 @@
+import 'package:festora/pages/help/help_page.dart';
 import 'package:festora/pages/notificacoes/notificacoes_page.dart';
 import 'package:festora/pages/funcionalidades/amigos/convites/convite_page.dart';
+import 'package:festora/utils/rota_anterior_utils.dart';
 import 'package:flutter/material.dart';
 import 'package:festora/services/token_service.dart';
 import 'package:go_router/go_router.dart';
@@ -88,6 +90,15 @@ class GradientAppBar extends StatelessWidget implements PreferredSizeWidget {
                             builder: (context) =>
                                 const NotificationBubbleDialog(),
                           );
+                        },
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.help_outline,
+                            color: Colors.blueGrey, size: 26),
+                        tooltip: 'Ajuda',
+                        onPressed: () {
+                          RotaAnteriorUtils.setRota(context);
+                          context.pushNamed(HelpPage.name); // ou use o nome correto da rota
                         },
                       ),
                       PopupMenuButton<String>(

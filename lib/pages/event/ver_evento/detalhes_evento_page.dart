@@ -11,6 +11,7 @@ import 'package:festora/models/usuario_details_model.dart';
 import 'package:festora/models/usuario_response_model.dart';
 import 'package:festora/pages/event/chat_evento.dart';
 import 'package:festora/pages/funcionalidades/participantes_page.dart';
+import 'package:festora/pages/help/help_page.dart';
 import 'package:festora/pages/menu/home_section_page.dart';
 import 'package:festora/services/usuario_service.dart';
 import 'package:festora/utils/rota_anterior_utils.dart';
@@ -145,8 +146,8 @@ class _DetalhesEventoPageState extends State<DetalhesEventoPage> {
     }
 
     if (hasError) {
-      return const Scaffold(
-        body: Center(child: Text('Erro ao carregar evento.')),
+      return Scaffold(
+        body: Center(child: Text('Erro ao carregar o evento')),
       );
     }
 
@@ -157,9 +158,23 @@ class _DetalhesEventoPageState extends State<DetalhesEventoPage> {
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
           onPressed: () {
-            RotaAnteriorUtils.redirecionar(context);
+            context.goNamed(HomeSectionPage.name);
           },
         ),
+        actions: [
+          Padding(
+            padding:
+                const EdgeInsets.only(right: 20), // espaço à esquerda do ícone
+            child: IconButton(
+              icon: const Icon(Icons.help_outline, color: Colors.white),
+              tooltip: 'Ajuda',
+              onPressed: () {
+                RotaAnteriorUtils.setRota(context);
+                context.pushNamed(HelpPage.name);
+              },
+            ),
+          ),
+        ],
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(20),

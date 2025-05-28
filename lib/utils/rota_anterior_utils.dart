@@ -24,9 +24,12 @@ class RotaAnteriorUtils {
   static Future<void> redirecionar(BuildContext context) async {
     final prefs = await SharedPreferences.getInstance();
     final String? rotaAnterior = prefs.getString("rota_anterior");
+
     if (rotaAnterior != null) {
       await prefs.remove("rota_anterior");
       context.go(rotaAnterior);
+    } else {
+      context.goNamed(LoginPage.name);
     }
   }
 }
